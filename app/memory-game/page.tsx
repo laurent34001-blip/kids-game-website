@@ -25,14 +25,22 @@ export default function MemoryGame() {
 
   const initializeGame = () => {
     const duplicatedEmojis = [...emojis, ...emojis]
-    const shuffled = duplicatedEmojis
-      .map((emoji, index) => ({
-        id: index,
-        emoji,
-        isFlipped: false,
-        isMatched: false,
-      }))
-      .sort(() => Math.random() - 0.5)
+    
+    // Fisher-Yates shuffle algorithm for proper randomization
+    const shuffled = duplicatedEmojis.map((emoji, index) => ({
+      id: index,
+      emoji,
+      isFlipped: false,
+      isMatched: false,
+    }))
+    
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      // Update IDs after shuffling
+      shuffled[i].id = i
+      shuffled[j].id = j
+    }
     
     setCards(shuffled)
     setFlippedCards([])

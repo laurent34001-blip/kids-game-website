@@ -15,19 +15,19 @@ export default function Home() {
             <p>Test your memory skills!</p>
           </Link>
           
-          <div className={styles.gameCard + ' ' + styles.comingSoon}>
+          <div className={`${styles.gameCard} ${styles.comingSoon}`}>
             <div className={styles.gameIcon}>🎯</div>
             <h2>Coming Soon</h2>
             <p>More games on the way!</p>
           </div>
           
-          <div className={styles.gameCard + ' ' + styles.comingSoon}>
+          <div className={`${styles.gameCard} ${styles.comingSoon}`}>
             <div className={styles.gameIcon}>🎲</div>
             <h2>Coming Soon</h2>
             <p>More games on the way!</p>
           </div>
           
-          <div className={styles.gameCard + ' ' + styles.comingSoon}>
+          <div className={`${styles.gameCard} ${styles.comingSoon}`}>
             <div className={styles.gameIcon}>🎪</div>
             <h2>Coming Soon</h2>
             <p>More games on the way!</p>
