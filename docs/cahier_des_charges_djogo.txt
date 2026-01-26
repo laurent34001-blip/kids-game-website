@@ -1,0 +1,1054 @@
+🧾 CAHIER DES CHARGES –
+SYSTÈME DE RÉSERVATION
+DJOGO
+
+1. Contexte
+DJOGO est un espace d’ateliers créatifs pour enfants (6 à 12 ans) et pour duos
+parent-enfant.
+Le système de réservation doit répondre à plusieurs contraintes spécifiques
+liées aux règles internes de capacité, de gestion de formules, de privatisation
+et de gestion des animateurs.
+Les solutions SaaS existantes ne gèrent pas correctement les capacités
+pondérées et les changements automatiques de formule.
+L’objectif est donc de créer un système fiable, personnalisable et totalement
+adapté aux règles métier de DJOGO.
+
+2. Objectifs du système
+2.1 Objectifs fonctionnels
+Le système doit permettre :
+1. De consulter les ateliers disponibles, leurs dates, horaires, prix et
+descriptifs.
+2. De réserver un atelier pour un enfant seul, un duo parent-enfant, ou une
+combinaison des deux.
+3. De calculer automatiquement la capacité restante basée sur une jauge
+pondérée (avec quota d’enfants seuls max ou duos max)
+4. De détecter les combinaisons particulières de participants et d’appliquer
+automatiquement des formules tarifaires spécifiques.
+5. De privatiser automatiquement une session si certaines conditions sont
+atteintes.
+6. De collecter des informations individuelles pour chaque participant : nom,
+âge, taille, allergies éventuelles.
+7. De gérer les paiements en ligne via XXX ?
+8. D’envoyer des emails automatiques (confirmation, rappel, annulation) (ou
+de se connecter à un système d’emailing via API / Make / Zapier)
+9. De gérer les animateurs, leurs disponibilités, leurs compétences et leurs
+affectations.
+10. D’éviter les conflits de planning (animateurs, salles).
+11. De fournir un back-office complet pour gérer sessions, salles, animateurs,
+règles tarifaires et exports.
+
+2.2 Objectifs non fonctionnels
+1. Performance élevée, même en période de forte affluence.
+2. Interface mobile, web mais surtout user friendly.
+3. Sécurité et conformité RGPD.
+4. Aucune donnée bancaire stockée localement
+5. Architecture évolutive permettant d’ajouter des règles métier/règles
+tarifaires.
+6. Intégration possible dans Webflow via API ou iframe.
+
+3. Règles métier
+3.1 Jauge pondérée (critique)
+Le cœur du système repose sur cette règle :
+Pondération :
+1 enfant seul = 1 unité
+1 duo parent-enfant = 1.25 unités
+(la valeur 1.25 pourra être ajustée facilement par DJOGO)
+
+Capacité maximale pondérée par session :
+➡️ 10 unités max
+
+Participants  Valeur   Total
+6 enfants seuls  6 × 1    6
+3 duos          3 × 1.25  3.75
+Total 9.75 unités → OK
+
+Exemple :
+La capacité maximale d’une salle est définie par un système pondéré :
+Enfant seul = 1 unité
+Duo parent-enfant = 1.25 unités
+La capacité maximale d’une session est de 10 unités.
+La capacité restante doit être recalculée à chaque ajout, modification ou
+suppression de participant.
+Aucune réservation ne peut dépasser la capacité pondérée maximale.
+Cette règle s’applique dans le front et dans le backend (double vérification).
+
+3.2 Privatisation automatique
+Une session devient automatiquement privatisée si une ou plusieurs conditions
+sont atteintes :
+- La jauge pondérée atteint la capacité maximale (10 unités).
+- Le nombre total de participants dépasse un seuil prédéfini (valeur
+  configurable).
+- Une règle personnalisée déclenche la privatisation (exemple : plus de X
+  duos).
+- Un administrateur force la privatisation depuis le back-office.
+
+Conséquences de la privatisation :
+- Application d’une formule tarifaire spécifique (exemple : Pack Anniversaire).
+- Blocage de toute nouvelle réservation par le public.
+- Affichage d’un état particulier dans le back-office.
+- Optionnel : assignation automatique d’un animateur spécifique.
+
+La privatisation doit pouvoir être annulée manuellement par un administrateur.
+
+3.3 Changement automatique de formules
+Le système doit analyser automatiquement les combinaisons de réservations
+d’un même atelier afin d’appliquer une formule tarifaire :
+
+Exemples :
+- 1 duo + 1 enfant seul déclenche automatiquement la formule Trio.
+- 6 enfants seuls déclenchent la formule Groupe Enfants.
+- 4 duos déclenchent la formule Duo Plus.
+- La jauge à 10 unités déclenche le Pack Anniversaire (forfait).
+- Les ateliers spécifiques peuvent déclencher des formules indépendantes.
+
+Chaque formule doit être :
+- paramétrable dans le back-office,
+- priorisée (certaines règles doivent être appliquées avant d'autres),
+- recalculée dynamiquement si quelqu’un annule ou modifie sa réservation.
+
+3.4 Gestion des animateurs
+Règles à respecter :
+- Un animateur ne peut gérer qu’un seul atelier par créneau.
+- Un animateur ne peut être affecté qu’aux ateliers correspondant à ses
+  compétences (catégories DJOGO : Inventeurs, Artistes, Gourmets).
+- Certains ateliers peuvent nécessiter deux animateurs.
+- Le système doit empêcher tout conflit d’agenda.
+- Le planning animateur doit être consultable par jour, semaine et mois.
+
+3.5 Gestion des salles
+Chaque atelier est associé à une salle spécifique, qui possède :
+- une capacité pondérée maximale définie,
+- des contraintes éventuelles (équipement, matériel…).
+
+Le système doit empêcher plusieurs ateliers d’utiliser la même salle au même
+créneau.
+
+4. Flux utilisateur
+1. L’utilisateur consulte les ateliers.
+2. Il sélectionne un atelier, une date et un créneau.
+3. Le système affiche la capacité pondérée restante.
+4. L’utilisateur choisit son type de réservation (enfant seul, duo).
+5. Le système calcule la capacité demandée et vérifie la jauge.
+6. Le système applique automatiquement une formule tarifaire si nécessaire.
+7. L’utilisateur renseigne les informations des participants.
+8. L’utilisateur procède au paiement (Stripe).
+9. Le système confirme la réservation et envoie un email.
+10. Un rappel est envoyé la veille de l’atelier.
+
+5. Back-office
+5.1 Modules principaux
+- Gestion des ateliers
+- Gestion des créneaux
+- Gestion des animateurs
+- Gestion des salles
+- Gestion des règles tarifaires
+- Vue planning globale (atelier, animateur, salles)
+- Exports CSV/Excel
+- Edition et modification des réservations
+- Forçage manuel des formules ou privatisation
+
+5.2 Gestion des règles tarifaires
+L’administrateur doit pouvoir :
+- créer une règle,
+- définir les conditions d’activation,
+- définir la formule tarifaire associée,
+- définir la priorité de la règle,
+- activer / désactiver une règle.
+
+Exemples de conditions possibles :
+- jauge ≥ X unités
+- nombre d’enfants ≥ X
+- nombre de duos ≥ X
+- combinaison enfant seul + duo
+- atelier spécifique déclencheur
+
+6. API (exigences)
+Endpoints minimums :
+GET /ateliers
+GET /ateliers/:id/disponibilites
+POST /reservations
+PUT /reservations/:id
+DELETE /reservations/:id
+GET /animateurs
+GET /salles
+POST /rules/apply
+GET /sessions/:id/recalculate
+POST /sessions/:id/privatisation
+
+Le backend doit recalculer :
+- la jauge pondérée
+- la formule active
+- le tarif final
+- les conflits animateur/salle
+
+7. Sécurité
+- Hébergement en HTTPS obligatoire
+- Authentification administrateur protégée par MFA ou équivalent
+- Conformité RGPD
+- Données personnelles chiffrées en base
+- Stripe obligatoire pour les paiements
+- Journalisation des actions critiques (modifications réservations,
+  privatisation, prix)
+
+8. Gestion des cas limites
+Le système doit gérer :
+- des réservations simultanées
+- l’annulation d’une réservation entraînant un changement de formule
+- le passage d’une session privatisée à non privatisée
+- une modification de participants qui dépasse la jauge
+- l’absence d’animateur disponible sur un créneau
+- le changement manuel d’un animateur par un administrateur
+
+9. Roadmap de développement
+Phase 1 : Base Technique
+- Architecture backend
+- Base de données
+- Gestion de la jauge pondérée
+- Création et gestion de sessions
+- Paiement Stripe
+- Emails automatiques
+
+Phase 2 : Gestion Règles et Privatisation
+- Module règles tarifaires
+- Détection des combinaisons
+- Privatisation automatique
+- Interface admin règles
+
+Phase 3 : Animateurs et Salles
+- Planning animateurs
+- Affectation automatique/manuel
+- Anti-conflit
+- Planning salles
+
+Phase 4 : Finalisation
+- Export CSV/Excel
+- Dashboard global
+- Tests (unitaires et fonctionnels)
+- Mise en production
+
+10. Livrables
+- Code source documenté
+- Documentation API
+- Back-office fonctionnel
+- Interfaces utilisateur finalisées
+- Jeux de tests
+- Procédure d’installation
+- Procédure de déploiement
+- Support de formation
+
+11. Phase 2 – Modules opérationnels et outils internes
+Cette phase vient compléter le système de réservation et de gestion des
+ateliers par des fonctionnalités internes de gestion et de pilotage de l’activité :
+stock, matériel, B2B, qualité des salles, formation et droits d’accès.
+
+11.1 Gestion des stocks (Café et consommables ateliers)
+Objectif : disposer d’un module centralisé de gestion des stocks pour :
+- les produits du café (boissons, snacks, matières premières),
+- les consommables des ateliers (bois, peinture, vis, colles, papier,
+  ingrédients, etc.).
+
+11.1.1 Concepts
+Article
+- Identifiant
+- Nom
+- Catégorie (Café, Atelier, Autre)
+- Sous-catégorie (exemple : Boisson, Snack, Aliment sec, Matériel bois,
+  Matériel arts plastiques)
+- Unité (pièce, litre, kg, paquet, etc.)
+- Stock minimum (seuil d’alerte)
+- Stock initial
+- Fournisseur principal (optionnel)
+- Prix d’achat moyen (optionnel)
+
+Magasin / Emplacement de stockage
+Exemples : Réserve Café, Réserve Ateliers, Local Principal, Salle X si
+stockage local
+Permet de distinguer plusieurs stocks physiques.
+
+Mouvement de stock
+- Entrée (livraison fournisseur, correction inventaire)
+- Sortie (consommation atelier, vente café, casse, perte)
+- Transfert entre emplacements
+- Date, quantité, motif, utilisateur responsable
+
+11.1.2 Fonctionnalités
+- Consultation du stock par article, filtre par catégorie, par emplacement.
+- Saisie manuelle d’entrées et de sorties de stock.
+- Gestion d’inventaires physiques périodiques (inventaire global ou par zone).
+- Alerte sur stock bas (par mail ou dans le back-office) lorsqu’un article
+  passe sous son seuil.
+- Historique des mouvements de stock par article.
+Pour les ateliers :
+- Association d’une « fiche consommables » à chaque type d’atelier (liste
+  d’articles + quantités par participant).
+- Option future : prévision de consommation à partir des réservations et
+  déduction automatique ou semi-automatique des stocks après la
+  session.
+- Exports CSV/Excel du stock et des mouvements.
+
+11.1.3 Droits
+- Administrateur : accès complet (configuration, articles, mouvements,
+  inventaires).
+- Responsable/Manager : gestion des stocks et inventaires.
+- Rôle Café : gestion des articles et mouvements liés au café uniquement.
+- Animateur : en option, déclaration simple de consommation d’articles pour
+  un atelier (interface simplifiée).
+
+11.2 Inventaire des salles et état du matériel
+Objectif : disposer d’une vision claire de l’équipement de chaque salle et de son
+état, avec suivi dans le temps.
+
+11.2.1 Concepts
+Salle
+- Identifiant, nom, type (Gastronomie, Menuiserie, Arts, etc.)
+- Capacité (réservations, déjà définie en phase 1)
+- Liste de matériel associé.
+
+Matériel
+- Nom
+- Type (outil, meuble, équipement spécifique)
+- Quantité
+- Salle associée (ou zone)
+- État (OK, À vérifier, Hors service)
+- Dernière date de contrôle
+- Commentaire
+
+Ticket / demande de maintenance
+- Lien à un matériel ou à une salle
+- Description du problème
+- Date de création
+- Statut (ouvert, en cours, résolu)
+- Responsable suivi
+
+11.2.2 Fonctionnalités
+- Liste et fiche détaillée par salle avec inventaire du matériel.
+- Mise à jour de l’état du matériel (OK / À vérifier / HS).
+- Création rapide de tickets de maintenance depuis la fiche salle ou la fiche
+  matériel.
+- Historique des interventions sur un matériel ou une salle.
+- Export inventaire par salle.
+
+11.2.3 Intégration
+- Lien avec la notation de propreté des salles (voir 11.4) pour croiser qualité,
+  propreté et incidents matériels.
+- Possibilité à terme de générer des rapports mensuels de qualité par salle.
+- Possibilité à terme de générer des rapports mensuels de qualité par salle.
+
+11.3 Boutique privée B2B / Associations
+Objectif : proposer un espace de commande réservé aux clients professionnels
+(entreprises, associations, écoles, etc.).
+
+11.3.1 Accès
+- Accès restreint par compte (login/mot de passe) et rôle « Client B2B ».
+- Validation des comptes B2B par un Administrateur ou un Responsable.
+
+11.3.2 Produits et offres
+Catalogue B2B distinct du site grand public ou filtré :
+- Privatisations d’ateliers
+- Packs anniversaires
+- Packs ateliers pour groupes scolaires
+- Location de salles
+- Prestations sur mesure
+
+Tarification spécifique B2B :
+- Prix par pack
+- Prix dégressifs possibles par volume
+- Possibilité de gérer des grilles tarifaires spécifiques par segment
+  (association, entreprise, école).
+
+11.3.3 Parcours B2B
+- Le client B2B se connecte.
+- Il consulte le catalogue B2B.
+- Il ajoute des produits B2B à un panier.
+Deux options de validation possibles (à préciser) :
+- Mode devis : création d’une demande de devis à valider par DJOGO.
+- Mode commande directe : validation avec paiement en ligne ou
+  paiement différé (à définir).
+- Confirmation de commande / devis envoyée par email.
+- Export des commandes B2B pour facturation (CSV/Excel ou intégration
+  externe).
+
+11.4 Notation de la propreté des salles
+Objectif : suivre la qualité de la propreté et de la remise en état des salles après
+chaque session.
+
+11.4.1 Fonctionnement
+- À la fin d’un créneau d’atelier, l’animateur ou le responsable peut remplir
+  une courte fiche d’évaluation pour la salle utilisée :
+  - Note de propreté (échelle à définir, par exemple 1 à 5).
+  - Commentaire facultatif (exemple : point d’attention, tâche persistante,
+    matériel à nettoyer).
+  - Possibilité de cocher si une intervention ménage est nécessaire.
+- Les responsables peuvent également saisir une notation lors de contrôles
+  ponctuels.
+- Lorsque les responsables notent plus d’une fois le même animateur en
+  faute sur la propreté de sa salle un mail automatique est envoyé avec un
+  rappel + un lien vers une formation e-learning propreté
+
+11.4.2 Exploitation
+- Dashboard par salle avec moyenne des notes sur une période.
+- Liste des sessions avec note faible (par exemple < 3) à traiter en priorité.
+- Liaison avec les tickets de maintenance si un commentaire signale un
+  problème matériel.
+
+11.5 Espace de formation / « Drive » avec IA
+Objectif : centraliser toutes les ressources de formation et de procédures pour
+les animateurs, responsables et personnel café, avec un moteur de recherche
+assisté par IA pour faciliter l’onboarding et la mise à jour des pratiques.
+
+11.5.1 Contenus
+- Documents texte : procédures, fiches ateliers, check-lists, règles d’hygiène,
+  consignes de sécurité.
+- Documents média : vidéos de démonstration, supports de formation.
+- Fiches « process DJOGO » : accueil, check-in, gestion incidents, fin de
+  journée, etc.
+
+11.5.2 Fonctionnalités
+- Organisation des contenus en catégories (Ateliers, Sécurité, Café, RH,
+  Process DJOGO).
+- Moteur de recherche sur l’ensemble des documents.
+- Assistant basé sur l’IA (chat interne) permettant :
+  - de répondre aux questions des animateurs à partir du corpus interne
+    (exemple : “Comment préparer l’atelier X ?”),
+  - de proposer des résumés ou des checklists.
+- Historique des contenus consultés par utilisateur (pour tracer l’onboarding).
+- Option ultérieure : petits modules de quiz ou validation de compréhension.
+
+11.5.3 Permissions
+- Animateur : accès aux contenus pertinents pour son rôle (fiches atelier,
+  procédures terrain).
+- Responsable : accès élargi, gestion d’une partie des contenus.
+- Café : accès aux procédures liées au café et à l’accueil.
+- Administrateur : accès complet, création, modification, suppression de
+  contenus, gestion de l’IA (indexation, sources, etc.).
+
+La solution technique pour l’IA pourra être externe (API) ou interne, mais
+l’exigence principale est d’interroger uniquement le corpus DJOGO (pas d’open
+web).
+
+11.6 Rôles et gestion des accès
+Objectif : structurer les permissions sur l’ensemble du système selon le type
+d’utilisateur.
+
+11.6.1 Rôles principaux
+- Animateur
+- Responsable / Manager
+- Café
+- Administrateur
+
+11.6.2 Droits indicatifs par rôle
+Les droits précis seront à affiner, mais la logique de base pourrait être :
+
+Animateur :
+- Consultation de son planning d’ateliers.
+- Consultation des fiches ateliers et procédures dans l’espace formation.
+- Saisie des évaluations de propreté de salle.
+- Saisie simple d’incidents matériels (tickets).
+- Éventuellement, déclaration de consommation de consommables
+  (interface simplifiée).
+
+Responsable / Manager :
+- Gestion des plannings (ateliers, animateurs, salles).
+- Validation / ajustement des réservations complexes.
+- Gestion des stocks (tous ou certains articles).
+- Gestion de l’inventaire matériel.
+- Accès aux rapports (propreté, qualité, remplissage, etc.).
+- Lecture et éventuellement modification de certaines règles tarifaires.
+
+Café :
+- Gestion des stocks et mouvements liés au café.
+- Accès aux ventes / consommations liées au café.
+- Consultation des procédures café dans l’espace formation.
+
+Administrateur :
+- Accès complet à tous les modules.
+- Gestion des rôles et des utilisateurs.
+- Gestion des règles tarifaires avancées (privatisation, formules).
+- Gestion et configuration du module IA (sources, indexation).
+- Paramétrage global du système.
+
+Les droits doivent être gérés via un système de permissions exploitable
+techniquement (par exemple, par ressource et par action : lecture, écriture,
+suppression, gestion).
+
+11.7 Suivi des manquements de propreté par animateur et déclenchement d’une formation
+Objectif : suivre les manquements récurrents à la propreté par animateur et
+déclencher automatiquement une action de formation lorsque le problème se
+répète.
+
+11.7.1 Enregistrement des manquements
+Pré-requis : la notation de propreté des salles (section 11.4) est en place.
+Lorsqu’un responsable ou manager saisit une notation de propreté pour une
+salle, il doit pouvoir :
+- Noter la propreté (échelle définie, par exemple de 1 à 5).
+- Indiquer si la propreté est jugée insuffisante.
+- Option : sélectionner l’animateur responsable de la séance, si ce n’est pas
+  déjà lié à la session.
+
+Chaque incident de propreté insuffisante est enregistré comme un
+“manquement de propreté” associé :
+- à la salle,
+- à la session,
+- à l’animateur correspondant,
+- à la date et l’heure,
+- au responsable ayant réalisé la notation,
+- à un éventuel commentaire.
+
+11.7.2 Règle de déclenchement automatique
+Le système doit surveiller, par animateur, le nombre de manquements
+enregistrés sur une période.
+
+Règle de base (paramétrable) :
+Si un même animateur est noté en faute sur la propreté plus d’un certain
+nombre de fois (par exemple 2 ou 3 fois) sur une période définie (par
+exemple 30 ou 60 jours), alors une action automatique est déclenchée.
+
+L’action automatique consiste à :
+- envoyer un email à l’animateur concerné,
+- avec un rappel des attentes DJOGO concernant la propreté,
+- un récapitulatif des séances concernées (dates, salles),
+- un lien vers une formation e-learning dédiée à la propreté et au rangement
+  en salle, hébergée dans l’espace de formation (section 11.5).
+
+Le mail doit être basé sur un template modifiable dans l’admin.
+
+Les paramètres suivants doivent être configurables :
+- nombre de manquements avant déclenchement,
+- période d’observation (en jours),
+- contenu du mail (sujet, corps, lien vers la formation).
+
+Une trace de l’envoi (date, destinataire, motif) doit être enregistrée dans le
+système.
+
+11.8 Feedback de séance par les animateurs et génération d’une liste de tâches
+Objectif : permettre aux animateurs de remonter les problèmes ou besoins
+constatés à la fin de chaque séance, et générer automatiquement une liste de
+choses à faire exploitable par les responsables.
+
+11.8.1 Formulaire de fin de séance
+Pour chaque session d’atelier, l’animateur doit avoir accès à un formulaire de
+"bilan de séance", comprenant a minima :
+- Note globale de la séance (optionnel).
+- Champs libres pour remarques :
+  - problèmes rencontrés (organisation, timing, participants, matériel),
+  - idées d’amélioration,
+  - incidents éventuels (non sécurité).
+- Section spécifique “Manques et besoins” :
+  - matériel manquant,
+  - consommables à recompléter,
+  - équipements à vérifier ou remplacer.
+
+Ce formulaire est lié à :
+- la session,
+- la salle,
+- l’atelier,
+- l’animateur.
+
+Le remplissage peut être encouragé systématiquement, sans être bloquant
+pour l’usage du planning.
+
+11.8.2 Transformation en liste de tâches
+Le système doit convertir automatiquement les éléments de “manques et
+besoins” en tâches dans un module de to-do interne.
+
+Concept “Tâche” générique :
+- Identifiant
+- Titre
+- Description
+- Origine (feedback animateur, propreté, inventaire, réunion, etc.)
+- Priorité (paramétrable ou attribuée automatiquement : basse, normale,
+  haute)
+- Type (maintenance, réassort consommables, propreté renforcée,
+  amélioration process)
+- Salle concernée (si applicable)
+- Atelier concerné (si applicable)
+- Personne ou rôle responsable (option : Responsable, Café, Maintenance)
+- Statut (à faire, en cours, terminé, abandonné)
+- Date de création
+- Date d’échéance (optionnelle)
+- Historique des changements
+
+Les responsables doivent disposer d’une vue consolidée de toutes les tâches,
+filtrable par :
+- origine (feedback animateur),
+- salle,
+- atelier,
+- type,
+- statut,
+- personne assignée.
+
+Les tâches créées automatiquement depuis les feedbacks de séance doivent
+être identifiables clairement comme telles.
+
+11.9 Notes de réunion et assignation de tâches
+Objectif : permettre de saisir les comptes-rendus de réunion et de convertir les
+décisions en tâches assignées aux personnes concernées, dans le même
+système de tâches que celui utilisé pour les feedbacks et incidents.
+
+11.9.1 Saisie des réunions
+Création d’un concept “Réunion” avec :
+- Identifiant
+- Titre de la réunion (exemple : Réunion équipe animateurs – Semaine 12)
+- Date et heure
+- Participants (liens vers utilisateurs)
+- Type de réunion (équipe, comité, direction, café, B2B, etc.)
+- Notes globales (zone de texte libre)
+
+L’interface doit permettre :
+- de saisir un compte-rendu structuré ou libre,
+- de tracer ce qui a été discuté.
+
+11.9.2 Création de tâches à partir de la réunion
+Intégration avec le modèle de “Tâche” défini en 11.8 :
+Depuis l’écran de réunion, un responsable doit pouvoir créer des tâches liées à
+cette réunion :
+- titre de la tâche,
+- description,
+- personne assignée (animateur, responsable, café, administrateur),
+- date d’échéance,
+- priorité,
+- lien à la réunion source.
+
+Ces tâches alimentent le même module de to-do que les tâches générées :
+- par les feedbacks animateurs,
+- par les incidents de propreté,
+- par les inventaires.
+
+Un lien doit exister de la tâche vers la réunion mère, afin de pouvoir remonter
+au contexte.
+
+11.9.3 Vue unifiée des tâches
+Le système doit proposer une vue globale de toutes les tâches, avec filtrage
+par :
+- origine (réunion, feedback, incident de propreté, stock, autre),
+- statut,
+- personne assignée,
+- salle, atelier, type.
+
+Cette vue pourra servir de base à la gestion opérationnelle hebdomadaire.
+
+11.10 Notifications automatiques aux animateurs sur les effectifs de leur salle
+Objectif : informer les animateurs à l’avance du nombre de participants
+attendus dans leur salle, et les prévenir en cas de modification significative peu
+de temps avant la séance.
+
+11.10.1 Rappel 48 heures avant la séance
+Pour chaque session d’atelier planifiée, le système doit envoyer
+automatiquement un email à l’animateur principal (et éventuellement au co-
+animateur s’il y en a un) 48 heures avant l’horaire de début de la séance.
+
+Contenu minimal du mail :
+- Objet : rappel séance dans 48 heures.
+- Nom de l’atelier.
+- Date et heure de la séance.
+- Salle attribuée.
+- Nombre total de participants attendus.
+- Répartition par type :
+  - nombre d’enfants seuls,
+  - nombre de duos parent-enfant (et donc total de personnes physiques).
+- Rappel éventuel de consignes importantes (exemple : heure d’arrivée,
+  check-list rapide, lien vers la fiche atelier).
+
+Paramètres configurables :
+- Délai avant la séance (par défaut 48 heures).
+- Modèle d’email (objet et corps du message).
+- Liste des champs inclus dans le mail (base : atelier, salle, participants).
+
+Conditions :
+- L’email ne doit être envoyé qu’aux animateurs assignés à la session.
+- Si l’assignation de l’animateur change après l’envoi, cela n’annule pas le
+  mail déjà envoyé, mais le nouvel animateur sera pris en compte pour la
+  notification à 24 heures (section suivante).
+
+11.10.2 Notification 24 heures avant en cas de changement
+Le système doit détecter les modifications intervenues entre le moment du mail
+envoyé à 48 heures et la veille de la séance (24 heures avant).
+
+Les modifications à prendre en compte sont :
+- ajout ou suppression de participants,
+- changement significatif de la structure des réservations (plus de duos,
+  moins d’enfants seuls, etc.),
+- annulation de la séance,
+- changement de salle.
+
+Règle de déclenchement :
+- Si au moins un changement est survenu dans la liste des participants ou
+  dans la salle, le système envoie un nouvel email récapitulatif 24 heures
+  avant l’horaire de début.
+- Si aucun changement n’a eu lieu, aucun email complémentaire n’est envoyé.
+
+Contenu minimal du mail à 24 heures :
+- Objet : mise à jour séance dans 24 heures.
+- Nom de l’atelier.
+- Date et heure.
+- Salle (version à jour).
+- Nombre de participants attendus mis à jour.
+- Répartition par type (enfants seuls, duos, total personnes).
+- Rappel succinct des principaux changements par rapport à la situation à 48
+  heures (si possible) :
+  Exemple : "+2 enfants seuls, -1 duo" ou "Salle modifiée : était Salle A,
+  devient Salle B".
+
+Paramètres configurables :
+- Délai avant la séance (par défaut 24 heures).
+- Modèle d’email.
+- Types de changements déclencheurs (au minimum, changement du total de
+  participants ou de la salle).
+
+11.10.3 Points techniques
+Un job planifié (cron ou équivalent) devra être exécuté régulièrement pour :
+- identifier les séances approchant de 48 heures,
+- envoyer les mails correspondants,
+- marquer qu’un mail 48 heures a été envoyé,
+- identifier les séances approchant des 24 heures,
+- vérifier si des modifications ont eu lieu depuis l’état mémorisé à 48
+  heures,
+- envoyer le mail de mise à jour le cas échéant.
+
+Il est nécessaire de conserver un “snapshot” de l’état de la session au
+moment de l’envoi des mails à 48 heures :
+- nombre de participants par type,
+- salle,
+- animateur(s).
+
+Ce snapshot servira de base de comparaison pour déterminer s’il y a eu
+des changements.
+
+En cas de changement d’animateur entre les 48 heures et les 24 heures :
+- le nouvel animateur doit recevoir le mail à 24 heures,
+- l’ancien animateur ne reçoit plus de notification pour cette séance à
+  partir du moment où il est désassigné.
+
+Les emails envoyés doivent être enregistrés dans des logs (type,
+destinataire, séance, date et heure d’envoi) pour diagnostic et traçabilité.
+
+11.11 Tableau Administrateur : suivi des coûts consommables par enfant
+Objectif : permettre à l’administrateur de vérifier que le coût total des
+consommables utilisés par participant pour chaque atelier ne dépasse pas une
+limite définie (par exemple 3 euros par enfant).
+
+11.11.1 Données nécessaires
+Pour chaque atelier, le système doit disposer :
+- de la liste des consommables utilisés,
+- de la quantité consommée par participant (ou par duo),
+- du coût unitaire de chaque consommable (défini dans le module stock),
+- du nombre réel de participants (enfants seuls et duos convertis en
+  participants physiques).
+
+11.11.2 Calcul attendu
+Coût total consommables pour un atelier :
+Somme(consommables utilisés * coût unitaire * quantité par participant *
+nombre de participants concernés)
+
+Coût par enfant :
+Coût total consommables / nombre de participants enfants
+
+Le système doit comparer ce coût au seuil défini dans la configuration globale
+(par défaut 3 €).
+
+11.11.3 Fichier / tableau à produire
+L’administrateur doit pouvoir exporter un fichier (CSV ou Excel) contenant, pour
+chaque session :
+- Identifiant de la session
+- Atelier
+- Date et heure
+- Animateur
+- Nombre d’enfants présents
+- Nombre de duos présents
+- Total participants physiques
+- Liste des consommables utilisés
+- Coût total consommables
+- Coût consommables par enfant
+- État : conforme / dépassement seuil
+
+Le tableau doit également présenter une vue groupée par atelier (moyenne
+mensuelle), et une vue groupée par responsable.
+
+11.11.4 Alertes automatiques
+Si un atelier dépasse la limite de coût définie :
+- un signal visuel doit apparaître dans le back-office,
+- une alerte email peut être envoyée à l’administrateur (option configurée).
+
+11.12 Gestion des paies des animateurs (basée sur le temps total)
+Objectif : calculer automatiquement la rémunération des animateurs en fonction
+de leur présence totale, incluant :
+- ateliers animés,
+- formations internes (e-learning ou présentiel),
+- réunions,
+- tâches internes validées (option),
+- présences administratives ou d’aménagement.
+
+11.12.1 Données nécessaires
+Pour chaque animateur, le système doit enregistrer :
+- la durée de chaque atelier animé (heure de début, de fin),
+- le temps passé en formation (issu de l’espace Drive),
+- la présence à des réunions (module réunion),
+- le temps consacré à des tâches opérationnelles (si besoin),
+- un taux horaire préconfiguré par animateur (modifiable en admin).
+
+11.12.2 Calcul attendu
+Total heures =
+Somme(heures ateliers) + Somme(heures formations) + Somme(heures
+réunions) + Somme(heures internes)
+
+Paie brute =
+Total heures * taux horaire
+
+11.12.3 Fichier / tableau à produire
+Export mensuel (CSV ou Excel) contenant :
+- Nom de l’animateur
+- Nombre d’ateliers effectués
+- Total heures ateliers
+- Total heures formation
+- Total heures réunions
+- Total heures internes
+- Total heures cumulées
+- Taux horaire
+- Rémunération du mois
+- Validation responsable (oui/non)
+
+Possibilité d’export global ou par animateur.
+Une vue synthétique mensuelle doit être affichée dans l’admin.
+
+11.13 Gestion de la R&D (Ateliers, matériel, artisans et états d’avancement)
+Objectif : suivre la création et l’évolution des ateliers DJOGO, les collaborations
+avec artisans et experts, ainsi que les étapes de validation internes.
+
+11.13.1 États d’avancement
+Chaque atelier en développement doit suivre un pipeline prédéfini :
+1. Théorie (papier)
+2. Pré-production (validation expert)
+3. Production (design ou test en cours)
+4. Validation finale (atelier prêt)
+5. Mise en exploitation
+
+Ces étapes doivent être configurables dans l’administrateur.
+
+11.13.2 Informations à stocker pour chaque atelier R&D
+- Nom de l’atelier
+- Responsable interne (manager)
+- Artisan associé (si applicable)
+- Date d’entrée en pipeline
+- Étape en cours
+- Historique des actions :
+  - validations,
+  - achats,
+  - tests,
+  - remontées animateurs
+- Documents associés (PDF, images, procédures)
+
+11.13.3 Actions possibles
+- Changer l’étape de l’atelier (workflow)
+- Ajouter une note ou un commentaire interne
+- Ajouter un livrable (image, fichier)
+- Assigner une tâche issue de la R&D (module To-do)
+- Ajouter l’intervention d’un artisan avec :
+  - nom et coordonnées,
+  - coût d’intervention,
+  - nature de la collaboration.
+
+11.13.4 Tableau administrateur R&D
+L’administrateur doit disposer d’un tableau centralisé listant :
+- Nom atelier
+- Responsable
+- Artisan
+- Étape actuelle
+- Date prochaine action attendue
+- Problèmes remontés
+- Tâches en cours
+- Documents disponibles
+- Export CSV/Excel disponible.
+
+11.14 Intégration avec le module de tâches internes
+Toutes les sections ajoutées ci-dessus doivent s’intégrer avec le module de
+tâches défini en section 11.8.
+
+Dans le module tâches, les origines suivantes doivent être possibles :
+- feedback animateur
+- réunion
+- stock consommables
+- inventaire salle
+- R&D atelier
+- qualité / propreté
+- note responsable
+
+Chaque tâche doit être :
+- assignée à une personne ou un rôle,
+- suivie dans le temps,
+- historisée,
+- filtrable dans des vues administrateur et manager.
+
+Voici l’ajout complet, clair, structuré et parfaitement intégré pour le module
+Café, dans le même style que l’ensemble du Cahier des Charges complet.
+Tu peux le placer en Section 11.15 dans la partie “Opérations internes”.
+
+11.15 Module Café : gestion opérationnelle quotidienne
+Objectif : fournir au personnel du café un outil de suivi et de contrôle simple,
+structuré et traçable, couvrant l’hygiène, les sorties produits, les contrôles
+obligatoires et les consommables alimentaires.
+
+Ce module doit permettre aux opérateurs Café et aux responsables d’avoir une
+vue consolidée de l’état du café, des frigos, des produits frais, du matériel,
+ainsi que des actions à réaliser chaque jour.
+
+11.15.1 Fonctionnalités principales
+Le module Café doit permettre :
+1. Le contrôle de la propreté de la cuisine.
+2. Le relevé quotidien des réfrigérateurs (température, état, stock frais).
+3. La gestion des sorties de madeleines et cakes (quantités du jour).
+4. La vérification et le suivi de l’état de la machine (machine à café, four, lave-
+   vaisselle…).
+5. Le contrôle des stocks de compote, yaourt et autres produits
+   consommables frais.
+6. L’ajout automatique de tâches en cas de manque, problème ou anomalie.
+7. La traçabilité du responsable ayant effectué les contrôles.
+8. Des exports journaliers/hebdomadaires.
+
+11.15.2 Propreté de la cuisine
+Le personnel Café doit pouvoir effectuer un relevé quotidien incluant :
+- Nettoyage du plan de travail.
+- État de la plonge.
+- État du sol.
+- État du matériel de cuisson.
+- État des poubelles.
+- Propreté des frigos (extérieur et intérieur).
+- État général de la zone clientèle (tables, chaises).
+
+Chaque point doit être :
+- noté (exemple : conforme / non conforme),
+- commenté si nécessaire.
+
+Si “non conforme” est sélectionné, le système doit :
+- créer automatiquement une tâche interne,
+- assigner la tâche selon le type de problème (café, maintenance, ménage),
+- garder une trace de l’incident dans l’historique du café.
+
+11.15.3 Relevé des frigos
+Pour chaque réfrigérateur du café, le système doit permettre de saisir :
+- Température actuelle (obligatoire).
+- Seuils d’alerte (min et max définis en admin).
+- État général (propre, à nettoyer, problème d’odeur, givre).
+- Présence et quantité des produits clés :
+  - Compote,
+  - Yaourts,
+  - Jus,
+  - Gâteaux frais,
+  - Pâtes fraîches ou mangées la veille,
+  - Éléments spécifiques aux ateliers gourmets (si applicable).
+
+Si la température dépasse les seuils configurés, une alerte doit être générée.
+Si un produit est en quantité insuffisante (paramétrable), le système doit :
+- générer automatiquement une tâche de réassort,
+- mettre en surbrillance le frigo dans l’admin,
+- notifier le responsable si configuré.
+
+11.15.4 Sortie des madeleines et cakes
+Le café doit pouvoir enregistrer chaque jour :
+- Quantité de madeleines sorties,
+- Quantité de cakes ou portions sorties,
+- Heure de sortie,
+- Personne responsable,
+- Date limite de consommation (si applicable).
+
+Cette fonctionnalité doit :
+- alimenter le suivi des stocks du module 11.4,
+- générer une alerte si le stock frais est insuffisant,
+- permettre un export journalier ou hebdomadaire des produits servis.
+
+11.15.5 Vérification de la machine (contrôle matériel café)
+Le système doit permettre une check-list dédiée à la machine principale du
+café :
+Machine à café :
+- niveau d’eau,
+- capsules ou grains,
+- nettoyage du porte-filtre,
+- état des buses,
+- vidage des bacs à marc,
+- rinçage obligatoire en fin de journée.
+
+Four :
+- état intérieur,
+- nettoyage des plaques.
+
+Lave-vaisselle :
+- niveau produit lessiviel,
+- filtre propre,
+- cycle obligatoire à vide.
+
+Chaque élément doit être noté comme :
+- Conforme,
+- À vérifier,
+- Hors service.
+
+Lorsque l’état est “À vérifier” ou “Hors service”, une tâche doit être créée
+automatiquement.
+
+11.15.6 Check compote, yaourts et produits frais
+Le personnel Café doit pouvoir déclarer quotidiennement :
+- Quantité restante de compotes,
+- Quantité restante de yaourts,
+- Quantité restante de jus individuels,
+- Expiration des produits,
+- Produits manquants,
+- Conditionnement ouvert ou non conforme.
+
+Pour chaque produit, l’administrateur doit pouvoir définir :
+- une quantité minimale (seuil),
+- une alerte automatique si inférieur,
+- une périodicité de vérification (par défaut quotidienne).
+
+Relevés et écarts doivent être archivés.
+
+11.15.7 Tableau et historique Café
+Un tableau Café doit être accessible aux responsables et administrateurs,
+regroupant :
+- Contrôles frigos du jour,
+- Températures frigo,
+- Produits manquants,
+- Historique des non-conformités,
+- Suivi de la machine (notes, incidents),
+- Suivi propreté cuisine,
+- Tâches générées,
+- Historique des sorties madeleines/cakes,
+- Expirations de produits frais,
+- Périodes de pénurie récurrentes (statistiques).
+
+Export disponible en CSV / Excel :
+- Journalier,
+- Hebdomadaire,
+- Mensuel.
+
+11.15.8 Permissions et visibilité
+Rôles et droits pour ce module :
+Rôle Café :
+- Accès complet au module Café,
+- Saisie et modification des relevés du jour,
+- Consultation des historiques.
+
+Responsable / Manager :
+- Accès complet,
+- Validation des relevés,
+- Attribution des tâches,
+- Accès aux statistiques.
+
+Administrateur :
+- Accès complet,
+- Paramétrage des seuils,
+- Gestion des alertes,
+- Ajout / suppression des items de contrôle,
+- Gestion des utilisateurs Café.
+
+Animateur :
+- Aucun accès, sauf si décidé ultérieurement
+
+11.15.9 Intégration avec le module de tâches internes
+Chaque anomalie ou incident détecté dans le module Café doit créer
+automatiquement une tâche (voir section 12), avec :
+- description automatique générée,
+- priorité définie selon le type d’incident (ex : frigo hors température = haute),
+- assignation automatique au rôle ou utilisateur approprié (Café,
+  Maintenance, Responsable),
+- lien avec la fiche Café du jour,
+- historique horodaté.
+
+🧾 CAHIER DES CHARGES – SYSTÈME DE RÉSERVATION DJOGO

@@ -1,0 +1,137 @@
+.menu {
+  background-color: var(--brand-colors-brand-red-djogo);
+  min-height: 80px;
+  position: relative;
+  width: 100%;
+}
+
+.menu__inner {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 16px 24px;
+  width: 100%;
+}
+
+.menu .logo-instance {
+  height: 40px !important;
+  left: unset !important;
+  top: unset !important;
+  width: 172px !important;
+}
+
+.menu .logo {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.menu .logo img {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+.menu .buttons-general {
+  background-color: var(--brand-colors-yellow-dark);
+  border-radius: 16px;
+  height: 48px;
+  overflow: hidden;
+  position: relative;
+  width: 200px;
+}
+
+.hero-cta .buttons-general {
+  background-color: var(--brand-colors-yellow-dark);
+  border-radius: 16px;
+  height: 48px;
+  overflow: hidden;
+  position: relative;
+  width: 200px;
+}
+
+.menu .button {
+  all: unset;
+  align-items: center;
+  background-color: var(--brand-colors-brand-yellow-djogo);
+  --press-depth: 3px;
+  --press-offset: 0px;
+  border-bottom: calc(3px - var(--press-offset)) solid var(--brand-colors-yellow-dark);
+  border-radius: var(--gap-et-radius-16);
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--gap-et-radius-8);
+  height: calc(44px - var(--press-offset));
+  justify-content: center;
+  line-height: 1;
+  left: 1px;
+  overflow: hidden;
+  padding: var(--gap-et-radius-12) 24px;
+  position: relative;
+  top: calc(50.00% - 25px);
+  transition: border-bottom 160ms ease, transform 160ms ease, height 160ms ease;
+  transform: translateY(var(--press-offset));
+  width: calc(100% - 1px);
+}
+
+.menu .button:hover {
+  --press-offset: var(--press-depth);
+}
+
+.hero-cta .button {
+  all: unset;
+  align-items: center;
+  background-color: var(--brand-colors-brand-yellow-djogo);
+  --press-depth: 3px;
+  --press-offset: 0px;
+  border-bottom: calc(3px - var(--press-offset)) solid var(--brand-colors-yellow-dark);
+  border-radius: var(--gap-et-radius-16);
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--gap-et-radius-8);
+  height: calc(44px - var(--press-offset));
+  justify-content: center;
+  line-height: 1;
+  left: 1px;
+  overflow: hidden;
+  padding: var(--gap-et-radius-12) 24px;
+  position: relative;
+  top: calc(50.00% - 25px);
+  transition: border-bottom 160ms ease, transform 160ms ease, height 160ms ease;
+  transform: translateY(var(--press-offset));
+  width: calc(100% - 1px);
+}
+
+.hero-cta .button:hover {
+  --press-offset: var(--press-depth);
+}
+
+.menu .secondary {
+  color: var(--brand-colors-text-primary);
+  font-family: var(--sp-cial-BUTTON-TEXT-font-family);
+  font-size: var(--sp-cial-BUTTON-TEXT-font-size);
+  font-style: var(--sp-cial-BUTTON-TEXT-font-style);
+  font-weight: var(--sp-cial-BUTTON-TEXT-font-weight);
+  letter-spacing: var(--sp-cial-BUTTON-TEXT-letter-spacing);
+  line-height: var(--sp-cial-BUTTON-TEXT-line-height);
+  position: relative;
+  text-align: center;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.hero-cta .secondary {
+  color: var(--brand-colors-text-primary);
+  font-family: var(--sp-cial-BUTTON-TEXT-font-family);
+  font-size: var(--sp-cial-BUTTON-TEXT-font-size);
+  font-style: var(--sp-cial-BUTTON-TEXT-font-style);
+  font-weight: var(--sp-cial-BUTTON-TEXT-font-weight);
+  letter-spacing: var(--sp-cial-BUTTON-TEXT-letter-spacing);
+  line-height: var(--sp-cial-BUTTON-TEXT-line-height);
+  position: relative;
+  text-align: center;
+  white-space: nowrap;
+  width: fit-content;
+}

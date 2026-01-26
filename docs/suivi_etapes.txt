@@ -1,0 +1,19 @@
+Suivi des étapes - DJOGO (2026-01-24)
+
+✅ Déjà fait
+1) Initialisation du projet Next.js (TypeScript + Tailwind + App Router).
+2) Mise en place de Prisma (SQLite) et configuration .env.
+3) Modélisation des entités principales (Ateliers, Sessions, Réservations, Participants, Règles, Formules, Animateurs, Salles).
+4) API routes de base pour les endpoints requis (ateliers, disponibilités, réservations, animateurs, salles, règles, privatisation, recalcul).
+5) UI de base (landing, listing ateliers, détail atelier, back-office).
+
+🟡 En cours / à faire ensuite
+6) Seed de données (ateliers, salles, sessions, règles tarifaires).
+7) Moteur avancé des règles (priorités, combinaisons complexes, seuils dynamiques).
+8) Gestion complète des animateurs, compétences et conflits planning.
+9) Privatisation automatique selon conditions configurables.
+10) Gestion paiements Stripe + emails automatiques.
+11) Back-office complet (CRUD, exports CSV/Excel, gestion des stocks, propreté, café, tâches).
+12) Système de notifications 48h/24h + snapshots.
+13) Authentification + rôles + RGPD.
+14) Tests unitaires et fonctionnels.

@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ParticipantType {
+  CHILD
+  DUO
+}
+
+enum SessionStatus {
+  DRAFT
+  OPEN
+  PRIVATE
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum InstructorRole {
+  LEAD
+  ASSISTANT
+}
+
+enum WorkshopCategory {
+  INVENTEURS
+  ARTISTES
+  GOURMETS
+}
+
+model Workshop {
+  id              String    @id @default(cuid())
+  title           String
+  description     String
+  category        WorkshopCategory
+  basePrice       Float
+  durationMinutes Int
+  sessions        Session[]
+  rules           PricingRule[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Room {
+  id          String    @id @default(cuid())
+  name        String
+  maxUnits    Float     @default(10)
+  equipment   String?
+  sessions    Session[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Instructor {
+  id          String                 @id @default(cuid())
+  name        String
+  email       String                 @unique
+  skills      InstructorSkill[]
+  assignments InstructorAssignment[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model InstructorSkill {
+  id           String           @id @default(cuid())
+  instructor   Instructor       @relation(fields: [instructorId], references: [id])
+  instructorId String
+  category     WorkshopCategory
+}
+
+model Session {
+  id                String                 @id @default(cuid())
+  workshop          Workshop               @relation(fields: [workshopId], references: [id])
+  workshopId        String
+  room              Room                   @relation(fields: [roomId], references: [id])
+  roomId            String
+  startAt           DateTime
+  endAt             DateTime
+  maxUnits          Float                  @default(10)
+  status            SessionStatus          @default(OPEN)
+  isPrivate         Boolean                @default(false)
+  privateReason     String?
+  pricingFormula    PricingFormula?        @relation(fields: [pricingFormulaId], references: [id])
+  pricingFormulaId  String?
+  unitsUsed         Float                  @default(0)
+  childrenCount     Int                    @default(0)
+  duoCount          Int                    @default(0)
+  totalParticipants Int                    @default(0)
+  reservations      Reservation[]
+  assignments       InstructorAssignment[]
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+}
+
+model Reservation {
+  id             String             @id @default(cuid())
+  session        Session            @relation(fields: [sessionId], references: [id])
+  sessionId      String
+  customerName   String
+  customerEmail  String
+  customerPhone  String?
+  status         ReservationStatus  @default(PENDING)
+  totalPrice     Float              @default(0)
+  pricingFormula PricingFormula?    @relation(fields: [pricingFormulaId], references: [id])
+  pricingFormulaId String?
+  participants   Participant[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model Participant {
+  id            String          @id @default(cuid())
+  reservation   Reservation    @relation(fields: [reservationId], references: [id])
+  reservationId String
+  type          ParticipantType
+  name          String
+  age           Int
+  heightCm      Int?
+  allergies     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model PricingFormula {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  isPackage   Boolean       @default(false)
+  priority    Int           @default(100)
+  rules       PricingRule[]
+  sessions    Session[]
+  reservations Reservation[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PricingRule {
+  id                 String         @id @default(cuid())
+  name               String
+  priority           Int            @default(100)
+  active             Boolean        @default(true)
+  minUnits           Float?
+  minChildren        Int?
+  minDuos            Int?
+  requireChildAndDuo Boolean        @default(false)
+  workshop           Workshop?      @relation(fields: [workshopId], references: [id])
+  workshopId         String?
+  formula            PricingFormula @relation(fields: [formulaId], references: [id])
+  formulaId          String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model InstructorAssignment {
+  id           String         @id @default(cuid())
+  session      Session        @relation(fields: [sessionId], references: [id])
+  sessionId    String
+  instructor   Instructor     @relation(fields: [instructorId], references: [id])
+  instructorId String
+  role         InstructorRole @default(LEAD)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}

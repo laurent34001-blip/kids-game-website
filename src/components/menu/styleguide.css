@@ -1,0 +1,17 @@
+:root {
+  --brand-colors-brand-red-djogo: rgba(253, 57, 7, 1);
+  --brand-colors-brand-yellow-djogo: rgba(255, 244, 130, 1);
+  --brand-colors-grey-black: rgba(0, 0, 0, 1);
+  --brand-colors-text-primary: var(--brand-colors-grey-black);
+  --brand-colors-yellow-dark: rgba(230, 160, 0, 1);
+  --gap-et-radius-12: 12px;
+  --gap-et-radius-154: 154px;
+  --gap-et-radius-16: 16px;
+  --gap-et-radius-8: 8px;
+  --sp-cial-BUTTON-TEXT-font-family: "Antipol VF", Helvetica;
+  --sp-cial-BUTTON-TEXT-font-size: 18px;
+  --sp-cial-BUTTON-TEXT-font-style: normal;
+  --sp-cial-BUTTON-TEXT-font-weight: 700;
+  --sp-cial-BUTTON-TEXT-letter-spacing: 0px;
+  --sp-cial-BUTTON-TEXT-line-height: normal;
+}
