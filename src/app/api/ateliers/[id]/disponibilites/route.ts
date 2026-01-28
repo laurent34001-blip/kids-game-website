@@ -18,7 +18,7 @@ type SessionWithDetails = {
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   const { id } = await context.params;
 
   const sessions = await prisma.session.findMany({

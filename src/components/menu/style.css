@@ -8,11 +8,38 @@
 .menu__inner {
   align-items: center;
   display: flex;
+  gap: 32px;
   justify-content: space-between;
   margin: 0 auto;
   max-width: 72rem;
   padding: 16px 24px;
   width: 100%;
+}
+
+.menu__links {
+  align-items: center;
+  display: flex;
+  gap: 28px;
+  margin-left: auto;
+}
+
+.menu__link {
+  align-items: center;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.menu__link:hover {
+  opacity: 0.9;
+}
+
+.menu__chevron {
+  height: 14px;
+  width: 14px;
 }
 
 .menu .logo-instance {

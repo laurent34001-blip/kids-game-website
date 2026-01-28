@@ -4,7 +4,7 @@ import { recalculateSession } from "@/lib/session";
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   const { id } = await context.params;
   const session = await recalculateSession(id);
 

@@ -5,7 +5,7 @@ import { recalculateSession } from "@/lib/session";
 export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   const { id } = await context.params;
   const body = await request.json();
 
@@ -57,7 +57,7 @@ export async function PUT(
 export async function DELETE(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   const { id } = await context.params;
 
   const reservation = await prisma.reservation.findUnique({

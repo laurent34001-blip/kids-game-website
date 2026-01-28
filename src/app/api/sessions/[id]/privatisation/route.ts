@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
-) {
+): Promise<Response> {
   const { id } = await context.params;
   const body = await request.json();
   const isPrivate = Boolean(body.isPrivate ?? true);

@@ -296,9 +296,11 @@ export default function Home() {
                 {
                   title: "Restauration\nengagée",
                   icon: (
-                    <path
-                      d="M12 3C9.23858 3 7 5.23858 7 8C7 10.7614 9.23858 13 12 13C14.7614 13 17 10.7614 17 8C17 5.23858 14.7614 3 12 3ZM6 14H18C19.1046 14 20 14.8954 20 16V20H4V16C4 14.8954 4.89543 14 6 14Z"
-                    />
+                    <>
+                      <path d="M11 7.25C10.1 6.05 8.3 5.9 7.3 7.05C6.2 8.35 6.45 10.2 7.7 11.35L11 14.25L14.3 11.35C15.55 10.2 15.8 8.35 14.7 7.05C13.7 5.9 11.9 6.05 11 7.25Z" />
+                      <path d="M3 15.5H9L11 13.5L15 15.5H18.5C19.6 15.5 20.5 16.4 20.5 17.5V19H6.5C4.6 19 3 17.4 3 15.5Z" />
+                      <path d="M9 15.5V13.5" />
+                    </>
                   ),
                 },
                 {
@@ -310,7 +312,13 @@ export default function Home() {
                 {
                   title: "Espace d'éveil\npour les -3 ans",
                   icon: (
-                    <path d="M6 8C6 5.79086 7.79086 4 10 4H14C16.2091 4 18 5.79086 18 8V14H6V8ZM5 16H19M9 20H15" />
+                    <>
+                      <path d="M6 9H16C17.7 9 19 10.3 19 12V15H3V12C3 10.3 4.3 9 6 9Z" />
+                      <path d="M8 9V7C8 5.3 9.3 4 11 4H13" />
+                      <path d="M13 4C14.7 4 16 5.3 16 7V9" />
+                      <circle cx="7" cy="17" r="1.5" />
+                      <circle cx="15" cy="17" r="1.5" />
+                    </>
                   ),
                 },
               ].map((item) => (
@@ -364,12 +372,13 @@ export default function Home() {
                       strokeWidth="1.8"
                       strokeLinecap="round"
                       strokeLinejoin="round"
+                      aria-hidden="true"
                     >
-                      <path d="M4 20V9" />
-                      <path d="M8 20V4" />
-                      <path d="M12 20V12" />
-                      <path d="M16 20V6" />
-                      <path d="M20 20V14" />
+                      <path d="M4 21V9l2-2 2 2 2-2 2 2 2-2 2 2 2-2 2 2v12" />
+                      <path d="M4 21h16" />
+                      <path d="M9 21v-6h6v6" />
+                      <path d="M4 9V4h4v5" />
+                      <path d="M16 9V4h4v5" />
                     </svg>
                   </div>
                   <div>
@@ -418,8 +427,11 @@ export default function Home() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <rect x="6" y="3" width="12" height="18" rx="2" />
-                      <circle cx="12" cy="18" r="1" />
+                      <path d="M2 20a10 10 0 0 1 20 0" />
+                      <path d="M7 7h10l1.5 4.5V17a2 2 0 0 1-2 2H7.5A2.5 2.5 0 0 1 5 16.5V11.5Z" />
+                      <path d="M7 11h10" />
+                      <circle cx="9" cy="16" r="1" />
+                      <circle cx="15" cy="16" r="1" />
                     </svg>
                   </div>
                   <div>
@@ -530,32 +542,40 @@ export default function Home() {
             <h2 className="text-2xl font-extrabold text-[var(--brand-colors-brand-red-djogo)] md:text-3xl">
               Vous en parlez mieux que nous 💗
             </h2>
-            <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-12">
               {[
                 {
                   name: "Aurélie, maman de Léonce",
                   text: "Super expérience avec ma fille, on a pas vu le temps passer et on aurait pas pensé réussir à réaliser un si bel objet ! Je recommande chaudement !",
+                  span: "lg:col-span-4",
                 },
                 {
                   name: "Sophie, maman de Lucie",
                   text: "Supers ateliers aussi bien pour des enfants que pour des pré-ados ! C'est ludique, instructif, bien cadré ! Longue vie à Djogo 💚",
+                  span: "lg:col-span-4",
                 },
                 {
                   name: "Yannls, papa d'Ysao",
                   text: "Une expérience aussi ludique qu'instructive ! C'est un super moment à partager avec ses enfants.",
+                  span: "lg:col-span-4",
                 },
                 {
                   name: "Florence, maman de Timéo",
                   text: "On a passé moi et mon fils un moment génial, avec une équipe au petit soin pour nous ! Merci Djogo !",
+                  span: "lg:col-span-6",
                 },
                 {
                   name: "Hervé, papa de Tiego",
                   text: "2ème expérience pour mon fils de 10 ans, carrelage la 1ere fois et maroquinerie la 2ème. Il a adoré apprendre et découvrir, très bien encadré avec beaucoup de pédagogie et de patience, bref, une super expérience pour lui permettre de faire !",
+                  span: "lg:col-span-6",
                 },
               ].map((testimonial) => (
-                <div key={testimonial.name} className="rounded-2xl bg-white p-6 shadow-sm">
-                  <div className="text-2xl text-zinc-900">“”</div>
-                  <p className="mt-1 text-sm font-semibold text-zinc-500">
+                <div
+                  key={testimonial.name}
+                  className={`rounded-2xl bg-white p-6 shadow-sm ${testimonial.span}`}
+                >
+                  <div className="text-xl font-bold text-zinc-900">””</div>
+                  <p className="mt-2 text-sm font-semibold text-zinc-500">
                     {testimonial.name}
                   </p>
                   <p className="mt-3 text-sm text-zinc-800">{testimonial.text}</p>
@@ -565,27 +585,18 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="bg-zinc-900 text-white">
+        <footer className="bg-[#f7efe3]">
           <div className="mx-auto w-full max-w-6xl px-6 py-12">
             <div className="flex flex-col items-center gap-4 text-center">
-              <p className="text-lg font-bold">DJOGO</p>
-              <p className="text-sm text-zinc-300">
-                Les nouveaux lieux de loisirs urbains pour enfants : Paris, jouer, se
-                révéler.
+              <img
+                className="h-10 w-auto"
+                src="/images/logo_djogo_orange.svg"
+                alt="Djogo"
+              />
+              <p className="text-sm font-semibold text-zinc-900">
+                Les nouveaux lieux de loisirs urbains pour enfants - Faire, jouer, se régaler
               </p>
-              <div className="flex flex-wrap gap-4 text-xs text-zinc-400">
-                <span>Ateliers</span>
-                <span>Services</span>
-                <span>À propos</span>
-                <span>Blog</span>
-                <span>Contact</span>
-              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-3">
-            <div className="h-6 bg-black" />
-            <div className="h-6 bg-orange-500" />
-            <div className="h-6 bg-orange-200" />
           </div>
         </footer>
       </main>

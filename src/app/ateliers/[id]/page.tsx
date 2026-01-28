@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { calculateUnits } from "@/lib/rules";
 
+export const dynamic = "force-dynamic";
+
 type Participant = { type: "CHILD" | "DUO" };
 type ReservationWithParticipants = { participants: Participant[] };
 type SessionWithDetails = {
