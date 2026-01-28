@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateUnits } from "@/lib/rules";
 
@@ -16,10 +16,10 @@ type SessionWithDetails = {
 };
 
 export async function GET(
-  _request: Request,
-  context: { params: { id: string } },
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   const sessions = await prisma.session.findMany({
     where: { workshopId: id },

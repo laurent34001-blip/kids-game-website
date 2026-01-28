@@ -35,7 +35,7 @@ export const Logo = ({
   vector1,
   vector2,
   vector3,
-}: LogoProps): JSX.Element => {
+}: LogoProps) => {
   const sources = [img, vector, vector1, vector2, vector3]
     .map(resolveAsset)
     .filter((src): src is string => Boolean(src));

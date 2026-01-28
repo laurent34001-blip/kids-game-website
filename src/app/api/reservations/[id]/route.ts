@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { recalculateSession } from "@/lib/session";
 
 export async function PUT(
-  request: Request,
-  context: { params: { id: string } },
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
   const body = await request.json();
 
   const reservation = await prisma.reservation.findUnique({
@@ -55,10 +55,10 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
-  context: { params: { id: string } },
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   const reservation = await prisma.reservation.findUnique({
     where: { id },

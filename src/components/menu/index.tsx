@@ -1,6 +1,6 @@
 import { Logo } from "./Logo";
 
-export const Menu = (): JSX.Element => {
+export const Menu = () => {
   return (
     <div className="menu">
       <div className="menu__inner">
