@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Menu } from "@/components/menu";
 import "./globals.css";
@@ -16,8 +17,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DJOGO - Réservations ateliers",
+  title: "Djogo - Les incroyables Ateliers Manuels Immersifs à Lyon",
   description: "Plateforme de réservation et back-office pour ateliers créatifs DJOGO.",
+  icons: {
+    icon: "/djogo_favicon.png",
+  },
 };
 
 export default function RootLayout({
@@ -37,6 +41,9 @@ export default function RootLayout({
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-6 text-xs text-zinc-500">
               <span>DJOGO · Système de réservation sur mesure</span>
               <span>RGPD · Stripe · Export CSV/Excel</span>
+              <Link href="/cgv" className="w-fit text-zinc-500 hover:text-zinc-900">
+                Conditions générales de vente
+              </Link>
             </div>
           </footer>
         </div>

@@ -5,6 +5,10 @@
   width: 100%;
 }
 
+.menu--porte-monnaie {
+  background-color: #1f3d2a;
+}
+
 .menu__inner {
   align-items: center;
   display: flex;
@@ -68,6 +72,44 @@
   overflow: hidden;
   position: relative;
   width: 200px;
+}
+
+.menu__toggle {
+  align-items: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+}
+
+.menu__toggle-line {
+  background: #ffffff;
+  border-radius: 999px;
+  display: block;
+  height: 2px;
+  width: 22px;
+}
+
+.menu__mobile {
+  display: none;
+  padding: 0 24px 20px;
+}
+
+.menu__mobile.is-open {
+  display: block;
+}
+
+.menu__mobile-links {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .hero-cta .buttons-general {
@@ -161,4 +203,28 @@
   text-align: center;
   white-space: nowrap;
   width: fit-content;
+}
+
+@media (max-width: 960px) {
+  .menu__links,
+  .menu .buttons-general {
+    display: none;
+  }
+
+  .menu__toggle {
+    display: flex;
+  }
+
+  .menu__inner {
+    gap: 16px;
+  }
+
+  .menu__mobile .buttons-general {
+    display: block;
+    width: 100%;
+  }
+
+  .menu__mobile .button {
+    width: 100%;
+  }
 }
