@@ -12,15 +12,22 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
+const createClient = () =>
   new PrismaClient({
     adapter: new PrismaBetterSqlite3({
-      url: normalizeSqliteUrl(process.env.DATABASE_URL ?? "file:./prisma/dev.db"),
+      url: normalizeSqliteUrl(process.env.DATABASE_URL ?? "file:./dev.db"),
     }),
     log: ["error", "warn"],
   });
 
+let prisma = globalForPrisma.prisma ?? createClient();
+
+if (!("adminUser" in prisma)) {
+  prisma = createClient();
+}
+
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
+
+export { prisma };

@@ -2,15 +2,141 @@
 
 import { useEffect, useState } from "react";
 
+const defaultAtelier = {
+  slug: "le-porte-monnaie-des-aventuriers",
+  title: "Le porte-monnaie des aventuriers",
+  headline: "Fabrique ton propre porte-monnaie en cuir de A à Z !",
+  description:
+    "Découvre les gestes des maroquiniers, apprends à couper, percer et assembler le cuir, puis repars avec ta création personnalisée.",
+  mainImage: "/images/cat_portefeuille.webp",
+  crestImage: "/images/blason_ducs.webp",
+  heroImages: [
+    "/images/atelier_portefeuille.webp",
+    "/images/atelier_portefeuille_2.webp",
+    "/images/atelier_portefeuille_3.webp",
+    "/images/atelier_portefeuille_4.webp",
+  ],
+  priceSolo: "29,90 €",
+  priceDuo: "39,90 €",
+  longDescription:
+    "**Déroulé de l'atelier**\nAccueil dans l'atelier des aventuriers : découverte des outils et du cuir.\nChoix du cuir et design : les apprentis artisans sélectionnent formes et couleurs.\nFabrication du porte-monnaie : traçage, perçage et assemblage des pièces.\nPersonnalisation et finitions : poinçons, marquages et touches finales.",
+  reviews: [
+    {
+      name: "Aurélie, maman de Léonce",
+      text: "Super expérience avec ma fille, on a pas vu le temps passer et on aurait pas pensé réussir à réaliser un si bel objet ! Je recommande chaudement !",
+      span: "lg:col-span-4",
+    },
+    {
+      name: "Sophie, maman de Lucie",
+      text: "Supers ateliers aussi bien pour des enfants que pour des pré-ados ! C'est ludique, instructif, bien cadré ! Longue vie à Djogo 💚",
+      span: "lg:col-span-4",
+    },
+    {
+      name: "Yannls, papa d'Ysao",
+      text: "Une expérience aussi ludique qu'instructive ! C'est un super moment à partager avec ses enfants.",
+      span: "lg:col-span-4",
+    },
+    {
+      name: "Florence, maman de Timéo",
+      text: "On a passé moi et mon fils un moment génial, avec une équipe au petit soin pour nous ! Merci Djogo !",
+      span: "lg:col-span-6",
+    },
+    {
+      name: "Hervé, papa de Tiego",
+      text: "2ème expérience pour mon fils de 10 ans, carrelage la 1ere fois et maroquinerie la 2ème. Il a adoré apprendre et découvrir, très bien encadré avec beaucoup de pédagogie et de patience, bref, une super expérience pour lui permettre de faire !",
+      span: "lg:col-span-6",
+    },
+  ],
+};
+
 export default function PorteMonnaieDesAventuriersPage() {
   const [priceMode, setPriceMode] = useState<"solo" | "duo">("duo");
   const [isFading, setIsFading] = useState(false);
+  const [atelier, setAtelier] = useState(defaultAtelier);
 
   useEffect(() => {
     setIsFading(true);
     const timeout = setTimeout(() => setIsFading(false), 160);
     return () => clearTimeout(timeout);
   }, [priceMode]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch(`/api/ateliers/slug/${defaultAtelier.slug}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!data?.data || !isMounted) {
+          return;
+        }
+
+        const remote = data.data as Partial<typeof defaultAtelier> & {
+          heroImages?: string[];
+          reviews?: Array<{ name: string; text: string }>;
+        };
+
+        setAtelier({
+          ...defaultAtelier,
+          ...remote,
+          headline: remote.headline || defaultAtelier.headline,
+          description: remote.description || defaultAtelier.description,
+          mainImage: remote.mainImage || defaultAtelier.mainImage,
+          crestImage: remote.crestImage || defaultAtelier.crestImage,
+          heroImages: Array.isArray(remote.heroImages)
+            ? remote.heroImages
+            : defaultAtelier.heroImages,
+          longDescription:
+            remote.longDescription || defaultAtelier.longDescription,
+          reviews: Array.isArray(remote.reviews)
+            ? remote.reviews.map((review, index) => ({
+                ...review,
+                span: defaultAtelier.reviews[index]?.span ?? "lg:col-span-4",
+              }))
+            : defaultAtelier.reviews,
+        });
+      })
+      .catch(() => null);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const reviews = atelier.reviews.length ? atelier.reviews : defaultAtelier.reviews;
+  const priceSolo = atelier.priceSolo ?? defaultAtelier.priceSolo;
+  const priceDuo = atelier.priceDuo ?? defaultAtelier.priceDuo;
+  const crestImage = atelier.crestImage ?? defaultAtelier.crestImage;
+  const highlights = [
+    "1h30 d'atelier avec un animateur ou une animatrice diplômé.e",
+    "Repars à la maison avec ta création",
+    "7-12 ans pour les enfants seuls, 4-12 ans avec un adulte accompagnant",
+  ];
+  const longDescription =
+    atelier.longDescription ?? defaultAtelier.longDescription;
+
+  const renderRichText = (text: string) => {
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    return lines.map((line, index) => {
+      const parts = line.split(/\*\*(.*?)\*\*/g);
+      return (
+        <p key={`${line}-${index}`} className="mt-3 text-sm text-zinc-700">
+          {parts.map((part, partIndex) =>
+            partIndex % 2 === 1 ? (
+              <strong key={`${line}-${partIndex}`} className="font-semibold">
+                {part}
+              </strong>
+            ) : (
+              <span key={`${line}-${partIndex}`}>{part}</span>
+            ),
+          )}
+        </p>
+      );
+    });
+  };
 
   return (
     <main className="min-h-screen bg-[#1f3d2a] text-white">
@@ -24,16 +150,15 @@ export default function PorteMonnaieDesAventuriersPage() {
             Ateliers
           </a>
           <span className="mx-2">/</span>
-          <span className="text-white">Le porte-monnaie des aventuriers</span>
+          <span className="text-white">{atelier.title}</span>
         </nav>
 
         <div className="mt-5">
           <h1 className="text-2xl font-extrabold leading-tight md:text-3xl">
-            Fabrique ton propre porte-monnaie en cuir de A à Z !
+            {atelier.headline}
           </h1>
           <p className="mt-3 max-w-2xl text-sm text-white/80 md:text-base">
-            Découvre les gestes des maroquiniers, apprends à couper, percer et assembler
-            le cuir, puis repars avec ta création personnalisée.
+            {atelier.description}
           </p>
         </div>
 
@@ -41,38 +166,21 @@ export default function PorteMonnaieDesAventuriersPage() {
           <figure className="overflow-hidden rounded-[28px] bg-[#2d5a3d] shadow-lg">
             <img
               className="h-full max-h-[360px] w-full object-cover"
-              src="/images/cat_portefeuille.webp"
-              alt="Illustration d'un atelier créatif"
+              src={atelier.mainImage}
+              alt={atelier.title}
             />
           </figure>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              {
-                src: "/images/atelier_portefeuille.webp",
-                alt: "Atelier porte-monnaie - préparation du cuir",
-              },
-              {
-                src: "/images/atelier_portefeuille_2.webp",
-                alt: "Atelier porte-monnaie - découpe et traçage",
-              },
-              {
-                src: "/images/atelier_portefeuille_3.webp",
-                alt: "Atelier porte-monnaie - espace de création",
-              },
-              {
-                src: "/images/atelier_portefeuille_4.webp",
-                alt: "Atelier porte-monnaie - enfants fiers de leur création",
-              },
-            ].map((image) => (
+            {atelier.heroImages.map((image) => (
               <div
-                key={image.src}
+                key={image}
                 className="overflow-hidden rounded-[22px] bg-[#2d5a3d] shadow-lg"
               >
                 <img
                   className="h-40 w-full object-cover sm:h-44"
-                  src={image.src}
-                  alt={image.alt}
+                  src={image}
+                  alt={atelier.title}
                 />
               </div>
             ))}
@@ -86,45 +194,26 @@ export default function PorteMonnaieDesAventuriersPage() {
             <div className="flex items-start gap-4">
               <img
                 className="h-16 w-16"
-                src="/images/blason_ducs.webp"
+                src={crestImage}
                 alt="Blason des Ducs"
               />
               <div>
-                <h2 className="text-2xl font-extrabold">
-                  Fabrique ton propre porte-monnaie en cuir de A à Z !
-                </h2>
+                <h2 className="text-2xl font-extrabold">{atelier.headline}</h2>
                 <p className="mt-2 text-sm text-zinc-700">
-                  Embarquez dans le monde de la maroquinerie, chère aux Ducs, à travers
-                  la réalisation d'un porte-monnaie personnalisé et utile au quotidien !
+                  {atelier.description}
                 </p>
               </div>
             </div>
 
             <ul className="mt-8 space-y-4 text-sm text-zinc-800">
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3d8dc] text-[#6b1515]">
-                  ✓
-                </span>
-                <span className="font-semibold text-zinc-900">
-                  1h30 d'atelier avec un animateur ou une animatrice diplômé.e
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3d8dc] text-[#6b1515]">
-                  ✓
-                </span>
-                <span className="font-semibold text-zinc-900">
-                  Repars à la maison avec ta création
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3d8dc] text-[#6b1515]">
-                  ✓
-                </span>
-                <span className="font-semibold text-zinc-900">
-                  7-12 ans pour les enfants seuls, 4-12 ans avec un adulte accompagnant
-                </span>
-              </li>
+              {highlights.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3d8dc] text-[#6b1515]">
+                    ✓
+                  </span>
+                  <span className="font-semibold text-zinc-900">{item}</span>
+                </li>
+              ))}
             </ul>
 
             <p className="mt-6 text-sm text-zinc-700">
@@ -135,42 +224,9 @@ export default function PorteMonnaieDesAventuriersPage() {
             </p>
 
             <div className="mt-6">
-              <h3 className="text-sm font-extrabold text-zinc-900">
-                Déroulé de l'atelier
-              </h3>
-              <ul className="mt-3 space-y-3 text-sm text-zinc-700">
-                <li>
-                  <span className="font-semibold text-zinc-900">
-                    Accueil dans l'atelier des aventuriers :
-                  </span>{" "}
-                  les experts accueillent votre enfant et le plongent dans l'univers du travail
-                  du cuir. Il découvre alors les outils traditionnels (alêne, maillet, emporte-pièce),
-                  ainsi que les différentes étapes pour transformer une simple peau de cuir en un
-                  accessoire solide et élégant.
-                </li>
-                <li>
-                  <span className="font-semibold text-zinc-900">Choix du cuir et design :</span>{" "}
-                  les apprentis artisans choisissent parmi plusieurs types et couleurs de cuir.
-                </li>
-                <li>
-                  <span className="font-semibold text-zinc-900">
-                    Fabrication du porte-monnaie :
-                  </span>{" "}
-                  sous l'œil attentif de l'animateur, votre enfant apprend à tracer le patron sur
-                  le cuir, à percer les trous pour les boutons de pression et à assembler les
-                  différentes pièces comme un vrai maroquinier. L'atelier est entièrement adapté
-                  aux enfants, pour une expérience à la fois créative et manuelle.
-                </li>
-                <li>
-                  <span className="font-semibold text-zinc-900">Personnalisation et finitions :</span>{" "}
-                  pour terminer, votre enfant personnalise sa création avec des poinçons, des
-                  marquages ou des motifs, avant d'ajouter les touches finales pour un rendu unique.
-                </li>
-              </ul>
-              <p className="mt-4 text-sm text-zinc-700">
-                À l'issue de l'atelier, votre enfant repart avec son propre porte-monnaie
-                d'aventurier, prêt à accueillir des pièces, des trésors ou des souvenirs de mission.
-              </p>
+              <div className="text-sm text-zinc-700">
+                {renderRichText(longDescription)}
+              </div>
             </div>
 
             <div>
@@ -409,7 +465,7 @@ export default function PorteMonnaieDesAventuriersPage() {
                 }`}
               >
                 <p className="text-3xl font-extrabold">
-                  {priceMode === "solo" ? "29,90 €" : "39,90 €"}
+                  {priceMode === "solo" ? priceSolo : priceDuo}
                 </p>
                 <p className="text-sm text-zinc-600">
                   {priceMode === "solo"
@@ -615,38 +671,25 @@ export default function PorteMonnaieDesAventuriersPage() {
             Vous en parlez mieux que nous 💗
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-12">
-            {[
-              {
-                name: "Aurélie, maman de Léonce",
-                text: "Super expérience avec ma fille, on a pas vu le temps passer et on aurait pas pensé réussir à réaliser un si bel objet ! Je recommande chaudement !",
-                span: "lg:col-span-4",
-              },
-              {
-                name: "Sophie, maman de Lucie",
-                text: "Supers ateliers aussi bien pour des enfants que pour des pré-ados ! C'est ludique, instructif, bien cadré ! Longue vie à Djogo 💚",
-                span: "lg:col-span-4",
-              },
-              {
-                name: "Yannls, papa d'Ysao",
-                text: "Une expérience aussi ludique qu'instructive ! C'est un super moment à partager avec ses enfants.",
-                span: "lg:col-span-4",
-              },
-              {
-                name: "Florence, maman de Timéo",
-                text: "On a passé moi et mon fils un moment génial, avec une équipe au petit soin pour nous ! Merci Djogo !",
-                span: "lg:col-span-6",
-              },
-              {
-                name: "Hervé, papa de Tiego",
-                text: "2ème expérience pour mon fils de 10 ans, carrelage la 1ere fois et maroquinerie la 2ème. Il a adoré apprendre et découvrir, très bien encadré avec beaucoup de pédagogie et de patience, bref, une super expérience pour lui permettre de faire !",
-                span: "lg:col-span-6",
-              },
-            ].map((testimonial) => (
+            {reviews.map((testimonial) => (
               <div
                 key={testimonial.name}
                 className={`rounded-2xl bg-white p-6 shadow-sm ${testimonial.span}`}
               >
                 <div className="text-xl font-bold text-zinc-900">””</div>
+                <div className="mt-2 flex items-center gap-1 text-[#f4a261]">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <svg
+                      key={`${testimonial.name}-star-${index}`}
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 3.5l2.69 5.45 6.01.87-4.35 4.24 1.03 6-5.38-2.83-5.38 2.83 1.03-6-4.35-4.24 6.01-.87L12 3.5z" />
+                    </svg>
+                  ))}
+                </div>
                 <p className="mt-2 text-sm font-semibold text-zinc-500">
                   {testimonial.name}
                 </p>

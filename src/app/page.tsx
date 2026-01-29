@@ -575,6 +575,19 @@ export default function Home() {
                   className={`rounded-2xl bg-white p-6 shadow-sm ${testimonial.span}`}
                 >
                   <div className="text-xl font-bold text-zinc-900">””</div>
+                  <div className="mt-2 flex items-center gap-1 text-[#f4a261]">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <svg
+                        key={`${testimonial.name}-star-${index}`}
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 3.5l2.69 5.45 6.01.87-4.35 4.24 1.03 6-5.38-2.83-5.38 2.83 1.03-6-4.35-4.24 6.01-.87L12 3.5z" />
+                      </svg>
+                    ))}
+                  </div>
                   <p className="mt-2 text-sm font-semibold text-zinc-500">
                     {testimonial.name}
                   </p>

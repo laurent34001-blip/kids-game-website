@@ -1,8 +1,25 @@
-export default function AdminPage() {
+import { redirect } from "next/navigation";
+
+import { getAdminSession } from "@/lib/auth";
+
+export const runtime = "nodejs";
+
+export default async function AdminPage() {
+  const session = await getAdminSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
   const modules = [
     {
-      title: "Ateliers & sessions",
-      description: "Créer des ateliers, planifier les sessions et gérer les jauges.",
+      title: "Ateliers",
+      description: "Créer et éditer les ateliers (images, tarifs, avis).",
+      href: "/admin/atelier",
+    },
+    {
+      title: "Sessions",
+      description: "Planifier les sessions, gérer les jauges et privatisations.",
     },
     {
       title: "Animateurs",
@@ -32,7 +49,9 @@ export default function AdminPage() {
       <p className="mt-2 text-sm text-zinc-600">
         Centralisez la gestion des ateliers, des règles métier et des équipes.
       </p>
-
+      <p className="mt-1 text-xs text-zinc-500">
+        Connecté en tant que {session.user.email}.
+      </p>
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         {modules.map((module) => (
           <div
@@ -43,9 +62,18 @@ export default function AdminPage() {
               {module.title}
             </h2>
             <p className="mt-2 text-sm text-zinc-600">{module.description}</p>
-            <button className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-white">
-              Ouvrir le module
-            </button>
+            {module.href ? (
+              <a
+                className="mt-4 inline-flex rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-white"
+                href={module.href}
+              >
+                Ouvrir le module
+              </a>
+            ) : (
+              <button className="mt-4 rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-white">
+                Ouvrir le module
+              </button>
+            )}
           </div>
         ))}
       </div>

@@ -7,6 +7,7 @@ type Workshop = {
   title: string;
   description: string;
   category: string;
+  slug?: string | null;
 };
 
 export default async function AteliersPage() {
@@ -32,7 +33,7 @@ export default async function AteliersPage() {
             <a
               key={atelier.id}
               className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm hover:border-zinc-400"
-              href={`/ateliers/${atelier.id}`}
+              href={atelier.slug ? `/les-ateliers/${atelier.slug}` : `/ateliers/${atelier.id}`}
             >
               <h2 className="text-lg font-semibold text-zinc-900">
                 {atelier.title}
