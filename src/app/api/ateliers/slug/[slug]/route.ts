@@ -6,10 +6,11 @@ export const runtime = "nodejs";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { slug: string } },
+  context: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await context.params;
   const atelier = await prisma.workshop.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
   });
 
   if (!atelier) {

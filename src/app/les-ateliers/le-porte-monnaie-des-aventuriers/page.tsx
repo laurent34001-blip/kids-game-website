@@ -89,17 +89,7 @@ export default function PorteMonnaieDesAventuriersPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [cgvAccepted, setCgvAccepted] = useState(false);
   const [reservationCompleted, setReservationCompleted] = useState(false);
-  const [showSessionDebug, setShowSessionDebug] = useState(false);
-  const [showAllSessionsDebug, setShowAllSessionsDebug] = useState(false);
-  const [allSessionsDebug, setAllSessionsDebug] = useState<
-    Array<{
-      workshopTitle: string;
-      workshopId: string;
-      workshopSlug: string;
-      sessionsCount: number;
-    }>
-  >([]);
-  const [allSessionsLoading, setAllSessionsLoading] = useState(false);
+  // ...
   const [sessions, setSessions] = useState<
     Array<{
       id: string;
@@ -180,64 +170,7 @@ export default function PorteMonnaieDesAventuriersPage() {
       .catch(() => null);
   }, []);
 
-  useEffect(() => {
-    if (!showAllSessionsDebug) {
-      return;
-    }
-
-    let isMounted = true;
-    setAllSessionsLoading(true);
-
-    fetch("/api/ateliers")
-      .then((response) => (response.ok ? response.json() : null))
-      .then(async (data) => {
-        if (!data?.data || !isMounted) {
-          return;
-        }
-
-        const ateliers: Array<{ id: string; title: string; slug?: string | null }> =
-          data.data;
-        const results = await Promise.all(
-          ateliers.map(async (atelierItem) => {
-            if (!atelierItem.slug) {
-              return {
-                workshopTitle: atelierItem.title,
-                workshopId: atelierItem.id,
-                workshopSlug: "",
-                sessionsCount: 0,
-              };
-            }
-            const response = await fetch(
-              `/api/ateliers/slug/${atelierItem.slug}/disponibilites`,
-            );
-            const sessionsData = response.ok ? await response.json() : null;
-            const sessionsCount = Array.isArray(sessionsData?.data)
-              ? sessionsData.data.length
-              : 0;
-            return {
-              workshopTitle: atelierItem.title,
-              workshopId: atelierItem.id,
-              workshopSlug: atelierItem.slug ?? "",
-              sessionsCount,
-            };
-          }),
-        );
-
-        if (isMounted) {
-          setAllSessionsDebug(results);
-        }
-      })
-      .catch(() => null)
-      .finally(() => {
-        if (isMounted) {
-          setAllSessionsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [showAllSessionsDebug]);
+  // ...
 
   const reviews = atelier.reviews.length ? atelier.reviews : defaultAtelier.reviews;
   const priceSolo = atelier.priceSolo ?? defaultAtelier.priceSolo;
@@ -990,63 +923,7 @@ export default function PorteMonnaieDesAventuriersPage() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowSessionDebug((prev) => !prev)}
-                    className="mt-3 text-xs font-semibold text-zinc-500 underline"
-                  >
-                    {showSessionDebug ? "Masquer" : "Voir"} les sessions (debug)
-                  </button>
-
-                  {showSessionDebug ? (
-                    <div className="mt-2 max-h-48 overflow-auto rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-600">
-                      <p className="mb-2">
-                        Atelier slug: {defaultAtelier.slug} · sessions: {sessions.length}
-                      </p>
-                      {sessions.length ? (
-                        <ul className="space-y-1">
-                          {sessions.map((session) => (
-                            <li key={session.id} className="flex flex-col">
-                              <span>
-                                {new Date(session.startAt).toLocaleString("fr-FR")}
-                              </span>
-                              <span>
-                                id: {session.id} · restant: {Math.max(Math.floor(session.unitsRemaining ?? 0), 0)} · statut: {session.status} · privé: {session.isPrivate ? "oui" : "non"}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>Aucune session pour cet atelier.</p>
-                      )}
-                    </div>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    onClick={() => setShowAllSessionsDebug((prev) => !prev)}
-                    className="mt-2 text-xs font-semibold text-zinc-500 underline"
-                  >
-                    {showAllSessionsDebug ? "Masquer" : "Voir"} toutes les sessions (debug)
-                  </button>
-
-                  {showAllSessionsDebug ? (
-                    <div className="mt-2 max-h-56 overflow-auto rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-600">
-                      {allSessionsLoading ? (
-                        <p>Chargement des sessions…</p>
-                      ) : allSessionsDebug.length ? (
-                        <ul className="space-y-1">
-                          {allSessionsDebug.map((item) => (
-                            <li key={item.workshopId}>
-                              {item.workshopTitle} ({item.workshopSlug || "sans slug"}) · sessions: {item.sessionsCount}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>Aucune session trouvée.</p>
-                      )}
-                    </div>
-                  ) : null}
+                  {/* Debug panels supprimés */}
 
                   {selectedDay ? (
                     <div className="mt-4 rounded-2xl border border-[#e9d9c5] bg-[#f7efe3] p-4">
