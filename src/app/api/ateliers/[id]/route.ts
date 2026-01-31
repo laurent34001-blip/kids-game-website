@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { getAdminSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -18,8 +19,14 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } },
 ) {
+  const slug = params.id?.trim();
+
+  if (!slug) {
+    return NextResponse.json({ error: "Slug manquant." }, { status: 400 });
+  }
+
   const atelier = await prisma.workshop.findUnique({
-    where: { id: params.id },
+    where: { slug },
   });
 
   if (!atelier) {
@@ -33,12 +40,9 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } },
 ) {
-  const prismaAny = prisma as typeof prisma & {
-    workshop: any;
-  };
-
-  if (!params.id) {
-    return NextResponse.json({ error: "Atelier introuvable." }, { status: 404 });
+  const slugParam = params.id?.trim();
+  if (!slugParam || slugParam === "undefined" || slugParam === "null") {
+    return NextResponse.json({ error: "Slug manquant." }, { status: 400 });
   }
 
   try {
@@ -54,25 +58,29 @@ export async function PUT(
       return NextResponse.json({ error: "Titre manquant." }, { status: 400 });
     }
 
-    const current = await prismaAny.workshop.findUnique({
-      where: { id: params.id },
-      select: { slug: true },
+    const current = await prisma.workshop.findUnique({
+      where: { slug: slugParam },
+      select: { id: true, slug: true },
     });
+
+    if (!current) {
+      return NextResponse.json(
+        { error: "Atelier introuvable." },
+        { status: 404 },
+      );
+    }
 
     const incomingSlug =
       typeof body.slug === "string" && body.slug.trim()
         ? slugify(body.slug)
         : null;
 
-    const slug = current
-      ? incomingSlug && incomingSlug !== current.slug
-        ? incomingSlug
-        : null
-      : incomingSlug;
+    const slug =
+      incomingSlug && incomingSlug !== current.slug ? incomingSlug : null;
 
     if (slug) {
-      const existing = await prismaAny.workshop.findFirst({ where: { slug } });
-      if (existing && existing.id !== params.id) {
+      const existing = await prisma.workshop.findFirst({ where: { slug } });
+      if (existing) {
         return NextResponse.json(
           { error: "Ce slug est déjà utilisé." },
           { status: 409 },
@@ -116,20 +124,17 @@ export async function PUT(
       reviews: Array.isArray(body.reviews) ? body.reviews : [],
     };
 
-    const atelier = current
-      ? await prismaAny.workshop.update({
-          where: { id: params.id },
-          data,
-        })
-      : await prismaAny.workshop.create({
-          data: {
-            id: params.id,
-            ...data,
-            category: "ARTISTES",
-            basePrice: 29.9,
-            durationMinutes: 90,
-          },
-        });
+    const atelier = await prisma.workshop.update({
+      where: { id: current.id },
+      data,
+    });
+
+    if (current.slug) {
+      revalidatePath(`/les-ateliers/${current.slug}`);
+    }
+    if (atelier.slug && atelier.slug !== current.slug) {
+      revalidatePath(`/les-ateliers/${atelier.slug}`);
+    }
 
     return NextResponse.json({ data: atelier });
   } catch (error) {

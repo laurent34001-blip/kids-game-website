@@ -248,7 +248,7 @@ export default function AdminDashboard() {
               type="submit"
               className="mt-5 w-full rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white"
             >
-              Créer l'atelier
+              Créer l&apos;atelier
             </button>
 
             <div className="mt-6 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600">

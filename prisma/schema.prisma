@@ -11,7 +11,7 @@ datasource db {
 
 enum ParticipantType {
   CHILD
-  DUO
+  ADULT
 }
 
 enum SessionStatus {
@@ -64,7 +64,7 @@ model Workshop {
 model Room {
   id          String    @id @default(cuid())
   name        String
-  maxUnits    Float     @default(10)
+  maxUnits    Float     @default(10.5)
   equipment   String?
   sessions    Session[]
   createdAt   DateTime  @default(now())
@@ -96,7 +96,7 @@ model Session {
   roomId            String
   startAt           DateTime
   endAt             DateTime
-  maxUnits          Float                  @default(10)
+  maxUnits          Float                  @default(10.5)
   status            SessionStatus          @default(OPEN)
   isPrivate         Boolean                @default(false)
   privateReason     String?
@@ -110,15 +110,18 @@ model Session {
   assignments       InstructorAssignment[]
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
+
+  @@unique([workshopId, roomId, startAt])
 }
 
 model Reservation {
   id             String             @id @default(cuid())
   session        Session            @relation(fields: [sessionId], references: [id])
   sessionId      String
-  customerName   String
+  customerFirstName String
+  customerLastName  String
   customerEmail  String
-  customerPhone  String?
+  customerPhone  String
   status         ReservationStatus  @default(PENDING)
   totalPrice     Float              @default(0)
   pricingFormula PricingFormula?    @relation(fields: [pricingFormulaId], references: [id])
@@ -133,10 +136,11 @@ model Participant {
   reservation   Reservation    @relation(fields: [reservationId], references: [id])
   reservationId String
   type          ParticipantType
-  name          String
-  age           Int
-  heightCm      Int?
-  allergies     String?
+  firstName     String
+  lastName      String?
+  birthDate     DateTime?
+  phone         String?
+  ageRange      String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }

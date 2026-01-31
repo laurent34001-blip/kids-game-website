@@ -20,6 +20,7 @@ export default async function AdminPage() {
     {
       title: "Sessions",
       description: "Planifier les sessions, gérer les jauges et privatisations.",
+      href: "/admin/session",
     },
     {
       title: "Animateurs",
@@ -36,6 +37,7 @@ export default async function AdminPage() {
     {
       title: "Réservations",
       description: "Liste, modifications, annulations et exports.",
+      href: "/admin/reservation",
     },
     {
       title: "Opérations internes",

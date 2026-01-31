@@ -8,8 +8,7 @@ export type AtelierReview = {
 };
 
 export type Atelier = {
-  id: string;
-  slug: string | null;
+  slug: string;
   title: string;
   headline: string | null;
   description: string;
@@ -59,10 +58,12 @@ export default function AdminAtelierDashboard({
   initialAteliers,
 }: AdminAtelierDashboardProps) {
   const [ateliers, setAteliers] = useState<Atelier[]>(initialAteliers);
-  const [selectedAtelierId, setSelectedAtelierId] = useState<string>(
-    initialAteliers[0]?.id ?? "",
+  const [selectedAtelierSlug, setSelectedAtelierSlug] = useState<string>(
+    initialAteliers[0]?.slug ?? "",
   );
-  const [editingAtelierId, setEditingAtelierId] = useState<string | null>(null);
+  const [editingAtelierSlug, setEditingAtelierSlug] = useState<string | null>(
+    null,
+  );
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [formState, setFormState] = useState({
     title: "",
@@ -80,8 +81,8 @@ export default function AdminAtelierDashboard({
   const [error, setError] = useState<string | null>(null);
 
   const selectedAtelier = useMemo(
-    () => ateliers.find((atelier) => atelier.id === selectedAtelierId),
-    [ateliers, selectedAtelierId],
+    () => ateliers.find((atelier) => atelier.slug === selectedAtelierSlug),
+    [ateliers, selectedAtelierSlug],
   );
 
   const handleChange = (field: keyof typeof formState, value: string) => {
@@ -145,7 +146,7 @@ export default function AdminAtelierDashboard({
   };
 
   const resetForm = () => {
-    setEditingAtelierId(null);
+    setEditingAtelierSlug(null);
     setFormState({
       title: "",
       slug: "",
@@ -166,11 +167,17 @@ export default function AdminAtelierDashboard({
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
-    const isEditing = Boolean(editingAtelierId);
+    const editingAtelier = editingAtelierSlug
+      ? ateliers.find((atelier) => atelier.slug === editingAtelierSlug)
+      : undefined;
+    const isEditing = Boolean(editingAtelier);
 
     try {
+      if (isEditing && !editingAtelierSlug) {
+        throw new Error("Le slug est requis pour mettre à jour l'atelier.");
+      }
       const endpoint = isEditing
-        ? `/api/ateliers/${editingAtelierId}`
+        ? `/api/ateliers/${editingAtelierSlug}`
         : "/api/ateliers";
       const response = await fetch(endpoint, {
         method: isEditing ? "PUT" : "POST",
@@ -212,11 +219,11 @@ export default function AdminAtelierDashboard({
       if (isEditing) {
         setAteliers((prev) =>
           prev.map((atelier) =>
-            atelier.id === editingAtelierId ? data.data : atelier,
+            atelier.slug === editingAtelierSlug ? data.data : atelier,
           ),
         );
-        setSelectedAtelierId(data.data.id);
-        setEditingAtelierId(null);
+        setSelectedAtelierSlug(data.data.slug ?? "");
+        setEditingAtelierSlug(null);
         setFormState({
           title: "",
           slug: "",
@@ -231,7 +238,7 @@ export default function AdminAtelierDashboard({
         });
       } else {
         setAteliers((prev) => [data.data, ...prev]);
-        setSelectedAtelierId(data.data.id);
+        setSelectedAtelierSlug(data.data.slug ?? "");
         setFormState({
           title: "",
           slug: "",
@@ -260,7 +267,7 @@ export default function AdminAtelierDashboard({
       >
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">
-            {editingAtelierId ? "Éditer un atelier" : "Créer un atelier"}
+            {editingAtelierSlug ? "Éditer un atelier" : "Créer un atelier"}
           </h2>
           <div className="flex items-center gap-2">
             <button
@@ -268,7 +275,7 @@ export default function AdminAtelierDashboard({
               onClick={resetForm}
               className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-600"
             >
-              {editingAtelierId ? "Annuler" : "Créer un atelier"}
+              {editingAtelierSlug ? "Annuler" : "Créer un atelier"}
             </button>
           </div>
         </div>
@@ -521,7 +528,7 @@ export default function AdminAtelierDashboard({
         >
           {isSubmitting
             ? "Enregistrement..."
-            : editingAtelierId
+            : editingAtelierSlug
               ? "Mettre à jour"
               : "Créer l'atelier"}
         </button>
@@ -552,16 +559,24 @@ export default function AdminAtelierDashboard({
           <div className="mt-4 grid gap-3">
             {ateliers.map((atelier) => (
               <div
-                key={atelier.id}
+                key={atelier.slug || atelier.title}
                 className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                  selectedAtelierId === atelier.id
+                  selectedAtelierSlug === atelier.slug
                     ? "border-zinc-900 bg-zinc-900 text-white"
                     : "border-zinc-200 bg-white text-zinc-700"
                 }`}
               >
                 <button
                   type="button"
-                  onClick={() => setSelectedAtelierId(atelier.id)}
+                  onClick={() => {
+                    if (!atelier.slug) {
+                      setError(
+                        "Ajoutez un slug avant de sélectionner cet atelier.",
+                      );
+                      return;
+                    }
+                    setSelectedAtelierSlug(atelier.slug);
+                  }}
                   className="text-left font-semibold"
                 >
                   {atelier.title}
@@ -571,8 +586,14 @@ export default function AdminAtelierDashboard({
                     type="button"
                     className="rounded-full bg-white/10 px-3 py-1"
                     onClick={() => {
-                      setSelectedAtelierId(atelier.id);
-                      setEditingAtelierId(atelier.id);
+                      if (!atelier.slug) {
+                        setError(
+                          "Ajoutez un slug avant d'éditer cet atelier.",
+                        );
+                        return;
+                      }
+                      setSelectedAtelierSlug(atelier.slug);
+                      setEditingAtelierSlug(atelier.slug);
                       fillFormFromAtelier(atelier);
                     }}
                   >

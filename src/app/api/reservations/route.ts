@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { calculateUnits } from "@/lib/rules";
 import { recalculateSession } from "@/lib/session";
 
-type ParticipantType = "CHILD" | "DUO";
+type ParticipantType = "CHILD" | "ADULT";
 type Participant = { type: ParticipantType };
 type ReservationWithParticipants = { participants: Participant[] };
 type SessionWithDetails = {
@@ -18,13 +18,20 @@ export async function POST(request: Request) {
   const body = await request.json();
   const {
     sessionId,
-    customerName,
+    customerFirstName,
+    customerLastName,
     customerEmail,
     customerPhone,
     participants = [],
   } = body;
 
-  if (!sessionId || !customerName || !customerEmail) {
+  if (
+    !sessionId ||
+    !customerFirstName ||
+    !customerLastName ||
+    !customerEmail ||
+    !customerPhone
+  ) {
     return NextResponse.json(
       { error: "Champs requis manquants." },
       { status: 400 },
@@ -56,20 +63,20 @@ export async function POST(request: Request) {
   const existingChildren = typedSession.reservations.flatMap((reservation) =>
     reservation.participants.filter((p) => p.type === "CHILD"),
   ).length;
-  const existingDuos = typedSession.reservations.flatMap((reservation) =>
-    reservation.participants.filter((p) => p.type === "DUO"),
+  const existingAdults = typedSession.reservations.flatMap((reservation) =>
+    reservation.participants.filter((p) => p.type === "ADULT"),
   ).length;
 
   const newChildren = participants.filter(
     (p: { type: ParticipantType }) => p.type === "CHILD",
   ).length;
-  const newDuos = participants.filter(
-    (p: { type: ParticipantType }) => p.type === "DUO",
+  const newAdults = participants.filter(
+    (p: { type: ParticipantType }) => p.type === "ADULT",
   ).length;
 
   const unitsAfter = calculateUnits(
     existingChildren + newChildren,
-    existingDuos + newDuos,
+    existingAdults + newAdults,
   );
 
   if (unitsAfter > typedSession.maxUnits) {
@@ -79,27 +86,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const reservation = await prisma.reservation.create({
+  const reservation = await (prisma as any).reservation.create({
     data: {
       sessionId,
-      customerName,
+      customerFirstName,
+      customerLastName,
       customerEmail,
       customerPhone,
       status: "PENDING",
       participants: {
         create: participants.map(
           (participant: {
-            type: "CHILD" | "DUO";
-            name: string;
-            age: number;
-            heightCm?: number;
-            allergies?: string;
+            type: "CHILD" | "ADULT";
+            firstName: string;
+            lastName?: string;
+            birthDate?: string;
+            phone?: string;
+            ageRange?: string;
           }) => ({
             type: participant.type,
-            name: participant.name,
-            age: participant.age,
-            heightCm: participant.heightCm,
-            allergies: participant.allergies,
+            firstName: participant.firstName,
+            lastName: participant.lastName ?? null,
+            birthDate: participant.birthDate
+              ? new Date(participant.birthDate)
+              : null,
+            phone: participant.phone ?? null,
+            ageRange: participant.ageRange ?? null,
           }),
         ),
       },

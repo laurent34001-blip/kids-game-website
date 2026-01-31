@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculateUnits, chooseFormula } from "@/lib/rules";
 
-type Participant = { type: "CHILD" | "DUO" };
+type Participant = { type: "CHILD" | "ADULT" };
 type ReservationWithParticipants = { participants: Participant[] };
 type SessionWithDetails = {
   id: string;
@@ -31,12 +31,12 @@ export async function recalculateSession(sessionId: string) {
   const children = typedSession.reservations.flatMap((reservation) =>
     reservation.participants.filter((p) => p.type === "CHILD"),
   ).length;
-  const duos = typedSession.reservations.flatMap((reservation) =>
-    reservation.participants.filter((p) => p.type === "DUO"),
+  const adults = typedSession.reservations.flatMap((reservation) =>
+    reservation.participants.filter((p) => p.type === "ADULT"),
   ).length;
 
-  const unitsUsed = calculateUnits(children, duos);
-  const totalParticipants = children + duos * 2;
+  const unitsUsed = calculateUnits(children, adults);
+  const totalParticipants = children + adults;
 
   const rules = await prisma.pricingRule.findMany({
     include: { formula: true },
@@ -44,7 +44,7 @@ export async function recalculateSession(sessionId: string) {
   const formulas = await prisma.pricingFormula.findMany();
   const formula = chooseFormula(rules, formulas, {
     children,
-    duos,
+    adults,
     units: unitsUsed,
     workshopId: typedSession.workshopId,
   });
@@ -57,7 +57,7 @@ export async function recalculateSession(sessionId: string) {
     data: {
       unitsUsed,
       childrenCount: children,
-      duoCount: duos,
+      duoCount: adults,
       totalParticipants,
       pricingFormulaId: formula?.id ?? null,
       isPrivate,

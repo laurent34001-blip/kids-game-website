@@ -22,29 +22,29 @@ export type PricingFormula = {
 
 export const DEFAULT_WEIGHTS = {
   child: 1,
-  duo: 1.25,
+  adult: 1.25,
 };
 
 export type SessionCounts = {
   children: number;
-  duos: number;
+  adults: number;
   maxUnits: number;
 };
 
 export function calculateUnits(
   children: number,
-  duos: number,
+  adults: number,
   weights = DEFAULT_WEIGHTS,
 ): number {
-  return Number((children * weights.child + duos * weights.duo).toFixed(2));
+  return Number((children * weights.child + adults * weights.adult).toFixed(2));
 }
 
 export function isCapacityExceeded({
   children,
-  duos,
+  adults,
   maxUnits,
 }: SessionCounts): boolean {
-  return calculateUnits(children, duos) > maxUnits;
+  return calculateUnits(children, adults) > maxUnits;
 }
 
 export function chooseFormula(
@@ -52,7 +52,7 @@ export function chooseFormula(
   formulas: PricingFormula[],
   data: {
     children: number;
-    duos: number;
+    adults: number;
     units: number;
     workshopId?: string | null;
   },
@@ -79,13 +79,13 @@ export function chooseFormula(
     }
 
     if (rule.minDuos !== null && rule.minDuos !== undefined) {
-      if (data.duos < rule.minDuos) {
+      if (data.adults < rule.minDuos) {
         continue;
       }
     }
 
     if (rule.requireChildAndDuo) {
-      if (!(data.children > 0 && data.duos > 0)) {
+      if (!(data.children > 0 && data.adults > 0)) {
         continue;
       }
     }

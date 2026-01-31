@@ -9,7 +9,6 @@ type Review = {
 
 type AtelierEditorProps = {
   atelier: {
-    id: string;
     slug: string | null;
     title: string;
     headline: string | null;
@@ -73,7 +72,10 @@ export default function AdminAtelierEditor({ atelier }: AtelierEditorProps) {
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/ateliers/${atelier.id}`, {
+      if (!atelier.slug) {
+        throw new Error("Slug manquant. Ajoutez un slug avant d'enregistrer.");
+      }
+      const response = await fetch(`/api/ateliers/${atelier.slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -117,7 +119,7 @@ export default function AdminAtelierEditor({ atelier }: AtelierEditorProps) {
       <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Contenu principal</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Ces données sont visibles sur la page publique de l'atelier.
+          Ces données sont visibles sur la page publique de l&apos;atelier.
         </p>
 
         <div className="mt-4 space-y-4 text-sm">

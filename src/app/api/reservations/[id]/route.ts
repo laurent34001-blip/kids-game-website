@@ -20,7 +20,8 @@ export async function PUT(
   const updated = await prisma.reservation.update({
     where: { id },
     data: {
-      customerName: body.customerName ?? reservation.customerName,
+      customerFirstName: body.customerFirstName ?? reservation.customerFirstName,
+      customerLastName: body.customerLastName ?? reservation.customerLastName,
       customerEmail: body.customerEmail ?? reservation.customerEmail,
       customerPhone: body.customerPhone ?? reservation.customerPhone,
       status: body.status ?? reservation.status,
@@ -32,18 +33,22 @@ export async function PUT(
     await prisma.participant.createMany({
       data: body.participants.map(
         (participant: {
-          type: "CHILD" | "DUO";
-          name: string;
-          age: number;
-          heightCm?: number;
-          allergies?: string;
+          type: "CHILD" | "ADULT";
+          firstName: string;
+          lastName?: string;
+          birthDate?: string;
+          phone?: string;
+          ageRange?: string;
         }) => ({
           reservationId: id,
           type: participant.type,
-          name: participant.name,
-          age: participant.age,
-          heightCm: participant.heightCm,
-          allergies: participant.allergies,
+          firstName: participant.firstName,
+          lastName: participant.lastName ?? null,
+          birthDate: participant.birthDate
+            ? new Date(participant.birthDate)
+            : null,
+          phone: participant.phone ?? null,
+          ageRange: participant.ageRange ?? null,
         }),
       ),
     });

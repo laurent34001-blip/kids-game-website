@@ -44,7 +44,7 @@ export const Menu = () => {
               <path d="M6 9l6 6 6-6" />
             </svg>
           </a>
-          <a className="menu__link" href="/ateliers">
+          <Link className="menu__link" href="/les-ateliers">
             <span>Offres</span>
             <svg
               className="menu__chevron"
@@ -57,15 +57,15 @@ export const Menu = () => {
             >
               <path d="M6 9l6 6 6-6" />
             </svg>
-          </a>
-          <a className="menu__link" href="/contact">
+          </Link>
+          <Link className="menu__link" href="/contact">
             Contact
-          </a>
+          </Link>
         </nav>
         <div className="buttons-general">
-          <a className="button" href="/reservation">
+          <Link className="button" href="/reservation">
             <div className="secondary">Réserver</div>
-          </a>
+          </Link>
         </div>
         <button
           type="button"
@@ -99,7 +99,7 @@ export const Menu = () => {
               <path d="M6 9l6 6 6-6" />
             </svg>
           </a>
-          <a className="menu__link" href="/ateliers" onClick={closeMenu}>
+          <Link className="menu__link" href="/les-ateliers" onClick={closeMenu}>
             <span>Offres</span>
             <svg
               className="menu__chevron"
@@ -112,15 +112,15 @@ export const Menu = () => {
             >
               <path d="M6 9l6 6 6-6" />
             </svg>
-          </a>
-          <a className="menu__link" href="/contact" onClick={closeMenu}>
+          </Link>
+          <Link className="menu__link" href="/contact" onClick={closeMenu}>
             Contact
-          </a>
+          </Link>
         </nav>
         <div className="buttons-general" onClick={closeMenu}>
-          <a className="button" href="/reservation">
+          <Link className="button" href="/reservation">
             <div className="secondary">Réserver</div>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

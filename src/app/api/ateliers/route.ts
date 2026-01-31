@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
 
@@ -84,6 +85,10 @@ export async function POST(request: Request) {
       durationMinutes: 90,
     },
   });
+
+  if (atelier.slug) {
+    revalidatePath(`/les-ateliers/${atelier.slug}`);
+  }
 
   return NextResponse.json({ data: atelier });
 }

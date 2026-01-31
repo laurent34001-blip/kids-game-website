@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateUnits } from "@/lib/rules";
 
-type Participant = { type: "CHILD" | "DUO" };
+type Participant = { type: "CHILD" | "ADULT" };
 type ReservationWithParticipants = { participants: Participant[] };
 type SessionWithDetails = {
   id: string;
@@ -38,10 +38,10 @@ export async function GET(
     const children = session.reservations.flatMap((reservation) =>
       reservation.participants.filter((p) => p.type === "CHILD"),
     ).length;
-    const duos = session.reservations.flatMap((reservation) =>
-      reservation.participants.filter((p) => p.type === "DUO"),
+    const adults = session.reservations.flatMap((reservation) =>
+      reservation.participants.filter((p) => p.type === "ADULT"),
     ).length;
-    const units = calculateUnits(children, duos);
+    const units = calculateUnits(children, adults);
 
     return {
       id: session.id,

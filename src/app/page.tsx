@@ -11,7 +11,7 @@ export default function Home() {
                 Le nouveau lieu 100% ateliers manuels immersifs pour 3 à 12 ans !
               </h1>
               <p className="mt-4 text-base text-zinc-700 md:text-lg">
-                Un concept de 400m2 inédit où l'on fait comme les artisans, seul ou en famille 🔨
+                Un concept de 400m2 inédit où l&apos;on fait comme les artisans, seul ou en famille 🔨
               </p>
               <p className="mt-6 text-base font-semibold text-orange-600">
                 Ouverture ce samedi 24 janvier, réservez vos places dès maintenant !
@@ -37,7 +37,7 @@ export default function Home() {
         <section className="bg-[linear-gradient(to_bottom,#f7efe3_0%,#f7efe3_50%,#ffffff_50%,#ffffff_100%)]">
           <div className="mx-auto w-full max-w-6xl px-6 py-12">
             <h2 className="text-center text-2xl font-extrabold text-zinc-900 md:text-3xl">
-              Dans la peau d'artisans, chefs et artistes pendant 1h30 🔨🧑‍🍳🎨
+              Dans la peau d&apos;artisans, chefs et artistes pendant 1h30 🔨🧑‍🍳🎨
             </h2>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {[
@@ -192,7 +192,7 @@ export default function Home() {
                       className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white py-2 text-xs font-bold text-zinc-900 transition-transform duration-200 hover:scale-105"
                       href={atelier.href}
                     >
-                      VOIR L'ATELIER
+                      VOIR L&apos;ATELIER
                     </a>
                   </div>
                 </article>
@@ -257,7 +257,7 @@ export default function Home() {
                 <p className="mt-6 text-sm text-white/90 md:text-base">Vous y retrouverez :</p>
                 <ul className="mt-4 list-disc space-y-3 pl-5 text-sm text-white/90 md:text-base">
                   <li>
-                    Un lieu convivial pour patienter confortablement le temps de l'atelier.
+                    Un lieu convivial pour patienter confortablement le temps de l&apos;atelier.
                   </li>
                   <li>
                     Un espace adapté au télétravail avec connexion Wi‑Fi, idéal pour avancer sur
@@ -268,11 +268,11 @@ export default function Home() {
                     préparés avec des produits de qualité, locaux et responsables.
                   </li>
                   <li>
-                    Si vous avez un enfant en bas âge (-3 ans) un petit espace d'éveil est
+                    Si vous avez un enfant en bas âge (-3 ans) un petit espace d&apos;éveil est
                     disponible pendant que les plus grands sont en atelier !
                   </li>
                   <li>
-                    Un endroit pensé pour que l'expérience soit agréable aussi bien pour les
+                    Un endroit pensé pour que l&apos;expérience soit agréable aussi bien pour les
                     enfants que pour les parents !
                   </li>
                 </ul>

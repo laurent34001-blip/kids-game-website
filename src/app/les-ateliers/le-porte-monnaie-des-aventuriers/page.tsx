@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const defaultAtelier = {
   slug: "le-porte-monnaie-des-aventuriers",
@@ -53,6 +53,59 @@ export default function PorteMonnaieDesAventuriersPage() {
   const [priceMode, setPriceMode] = useState<"solo" | "duo">("duo");
   const [isFading, setIsFading] = useState(false);
   const [atelier, setAtelier] = useState(defaultAtelier);
+  const [atelierId, setAtelierId] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [frozenOffset, setFrozenOffset] = useState<number | null>(null);
+  const asideRef = useRef<HTMLDivElement | null>(null);
+  const bookingFormRef = useRef<HTMLDivElement | null>(null);
+  const naturalTopRef = useRef<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<{
+    day: number;
+    label: string;
+    slots: number;
+  } | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedSessionRemaining, setSelectedSessionRemaining] = useState<number | null>(null);
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [calendarMonthIndex, setCalendarMonthIndex] = useState(
+    new Date().getMonth(),
+  );
+  const [bookingForm, setBookingForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+  });
+  const [children, setChildren] = useState<
+    Array<{ firstName: string; ageRange: string }>
+  >([{ firstName: "", ageRange: "" }]);
+  const [adults, setAdults] = useState<
+    Array<{ firstName: string; lastName: string; birthDate: string; phone: string }>
+  >([]);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<
+    "success" | "failed" | null
+  >(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [cgvAccepted, setCgvAccepted] = useState(false);
+  const [reservationCompleted, setReservationCompleted] = useState(false);
+  const [showSessionDebug, setShowSessionDebug] = useState(false);
+  const [showAllSessionsDebug, setShowAllSessionsDebug] = useState(false);
+  const [allSessionsDebug, setAllSessionsDebug] = useState<
+    Array<{ workshopTitle: string; workshopId: string; sessionsCount: number }>
+  >([]);
+  const [allSessionsLoading, setAllSessionsLoading] = useState(false);
+  const [sessions, setSessions] = useState<
+    Array<{
+      id: string;
+      startAt: string;
+      endAt: string;
+      unitsRemaining: number;
+      isPrivate: boolean;
+      status: string;
+    }>
+  >([]);
 
   useEffect(() => {
     setIsFading(true);
@@ -94,6 +147,7 @@ export default function PorteMonnaieDesAventuriersPage() {
               }))
             : defaultAtelier.reviews,
         });
+        setAtelierId((remote as { id?: string }).id ?? null);
       })
       .catch(() => null);
 
@@ -101,6 +155,80 @@ export default function PorteMonnaieDesAventuriersPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!asideRef.current || naturalTopRef.current !== null) {
+      return;
+    }
+
+    const rect = asideRef.current.getBoundingClientRect();
+    naturalTopRef.current = rect.top + window.scrollY;
+  }, []);
+
+  useEffect(() => {
+    if (!atelierId) {
+      return;
+    }
+
+    fetch(`/api/ateliers/${atelierId}/disponibilites`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!data?.data) {
+          return;
+        }
+        setSessions(data.data);
+      })
+      .catch(() => null);
+  }, [atelierId]);
+
+  useEffect(() => {
+    if (!showAllSessionsDebug) {
+      return;
+    }
+
+    let isMounted = true;
+    setAllSessionsLoading(true);
+
+    fetch("/api/ateliers")
+      .then((response) => (response.ok ? response.json() : null))
+      .then(async (data) => {
+        if (!data?.data || !isMounted) {
+          return;
+        }
+
+        const ateliers: Array<{ id: string; title: string }> = data.data;
+        const results = await Promise.all(
+          ateliers.map(async (atelierItem) => {
+            const response = await fetch(
+              `/api/ateliers/${atelierItem.id}/disponibilites`,
+            );
+            const sessionsData = response.ok ? await response.json() : null;
+            const sessionsCount = Array.isArray(sessionsData?.data)
+              ? sessionsData.data.length
+              : 0;
+            return {
+              workshopTitle: atelierItem.title,
+              workshopId: atelierItem.id,
+              sessionsCount,
+            };
+          }),
+        );
+
+        if (isMounted) {
+          setAllSessionsDebug(results);
+        }
+      })
+      .catch(() => null)
+      .finally(() => {
+        if (isMounted) {
+          setAllSessionsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [showAllSessionsDebug]);
 
   const reviews = atelier.reviews.length ? atelier.reviews : defaultAtelier.reviews;
   const priceSolo = atelier.priceSolo ?? defaultAtelier.priceSolo;
@@ -113,6 +241,137 @@ export default function PorteMonnaieDesAventuriersPage() {
   ];
   const longDescription =
     atelier.longDescription ?? defaultAtelier.longDescription;
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonthIndex = today.getMonth();
+  const startOfToday = new Date(currentYear, currentMonthIndex, today.getDate());
+  const isCurrentMonth =
+    calendarYear === currentYear && calendarMonthIndex === currentMonthIndex;
+  const canGoPrev = !isCurrentMonth;
+  const calendarMonth = new Intl.DateTimeFormat("fr-FR", {
+    month: "long",
+  })
+    .format(new Date(calendarYear, calendarMonthIndex, 1))
+    .toUpperCase();
+  const calendarMonthLabel = new Intl.DateTimeFormat("fr-FR", {
+    month: "long",
+  }).format(new Date(calendarYear, calendarMonthIndex, 1));
+  const calendarOffset =
+    (new Date(calendarYear, calendarMonthIndex, 1).getDay() + 6) % 7;
+  const ageRanges = ["3-4 ans", "5-6 ans", "7-9 ans", "10-12 ans"];
+  const dayKey = (date: Date) =>
+    `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  const sessionsByDay = sessions.reduce<Record<string, typeof sessions>>(
+    (acc, session) => {
+      const sessionDate = new Date(session.startAt);
+      const key = dayKey(sessionDate);
+      acc[key] = acc[key] ? [...acc[key], session] : [session];
+      return acc;
+    },
+    {},
+  );
+  const daysInMonth = new Date(
+    calendarYear,
+    calendarMonthIndex + 1,
+    0,
+  ).getDate();
+  const calendarDays = Array.from({ length: daysInMonth }, (_, index) => {
+    const day = index + 1;
+    const dayDate = new Date(calendarYear, calendarMonthIndex, day);
+    const isPast = dayDate < startOfToday;
+    const key = dayKey(dayDate);
+    const daySessions = sessionsByDay[key] ?? [];
+    const remaining = daySessions.reduce(
+      (sum, session) => {
+        const sessionStart = new Date(session.startAt);
+        if (sessionStart < startOfToday) {
+          return sum;
+        }
+        if (session.isPrivate || session.status !== "OPEN") {
+          return sum;
+        }
+        return sum + (session.unitsRemaining ?? 0);
+      },
+      0,
+    );
+    const slots = isPast ? 0 : Math.max(Math.floor(remaining), 0);
+    return {
+      day,
+      slots,
+      status: slots > 0 ? "available" : "disabled",
+    };
+  });
+  const calendarGrid = [
+    ...Array.from({ length: calendarOffset }, () => null),
+    ...calendarDays,
+  ];
+  const selectedDate = selectedDay
+    ? new Date(calendarYear, calendarMonthIndex, selectedDay.day)
+    : null;
+  const selectedDayKey = selectedDate ? dayKey(selectedDate) : null;
+  const selectedDaySessions = selectedDayKey
+    ? sessionsByDay[selectedDayKey] ?? []
+    : [];
+  const timeSlots = selectedDaySessions.map((session) => {
+    const startAt = new Date(session.startAt);
+    const time = startAt.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const isPast = startAt < today;
+    const isDisabled =
+      isPast ||
+      session.unitsRemaining <= 0 ||
+      session.isPrivate ||
+      session.status !== "OPEN";
+    return {
+      time,
+      status: isDisabled ? "disabled" : "available",
+      sessionId: session.id,
+      unitsRemaining: session.unitsRemaining,
+    };
+  });
+
+  const parsePrice = (price: string) => {
+    const numeric = Number(price.replace(/[€\s]/g, "").replace(",", "."));
+    return Number.isFinite(numeric) ? numeric : 0;
+  };
+
+  const formatEuro = (value: number) =>
+    new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+    }).format(value);
+
+  const unitPrice = parsePrice(priceMode === "solo" ? priceSolo : priceDuo);
+  const availableUnits = selectedSessionRemaining ?? selectedDay?.slots ?? 0;
+  const childrenCount = Math.min(children.length, availableUnits);
+  const adultsCount = adults.length;
+  const childrenPrice = 29.9;
+  const adultPrice = 10;
+  const finalTotal = childrenCount * childrenPrice + adultsCount * adultPrice;
+  const isCapacityExceeded =
+    Boolean(selectedDay) && children.length > availableUnits;
+  const isFormValid =
+    Boolean(selectedDay) &&
+    Boolean(selectedTime) &&
+    Boolean(selectedSessionId) &&
+    bookingForm.firstName.trim().length > 0 &&
+    bookingForm.lastName.trim().length > 0 &&
+    bookingForm.email.trim().length > 0 &&
+    bookingForm.phone.trim().length > 0 &&
+    cgvAccepted &&
+    !isCapacityExceeded &&
+    children.every(
+      (child) => child.firstName.trim() && child.ageRange.trim(),
+    ) &&
+    adults.every(
+      (adult) =>
+        adult.firstName.trim() &&
+        adult.lastName.trim() &&
+        adult.birthDate.trim() &&
+        adult.phone.trim(),
+    );
 
   const renderRichText = (text: string) => {
     const lines = text
@@ -138,8 +397,96 @@ export default function PorteMonnaieDesAventuriersPage() {
     });
   };
 
+  const handlePaymentSuccess = async () => {
+    if (!isFormValid || !selectedSessionId) {
+      setValidationError(
+        "Merci de compléter tous les champs obligatoires avant le paiement.",
+      );
+      return;
+    }
+
+    setValidationError(null);
+
+    const participants = [
+      ...children.map((child) => ({
+        type: "CHILD" as const,
+        firstName: child.firstName,
+        ageRange: child.ageRange,
+      })),
+      ...adults.map((adult) => ({
+        type: "ADULT" as const,
+        firstName: adult.firstName,
+        lastName: adult.lastName,
+        birthDate: adult.birthDate,
+        phone: adult.phone,
+      })),
+    ];
+
+    try {
+      const response = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: selectedSessionId,
+          customerFirstName: bookingForm.firstName,
+          customerLastName: bookingForm.lastName,
+          customerEmail: bookingForm.email,
+          customerPhone: bookingForm.phone,
+          participants,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setValidationError(
+          data?.error ?? "Une erreur est survenue lors de la réservation.",
+        );
+        return;
+      }
+
+      setPaymentStatus("success");
+      setReservationCompleted(true);
+    } catch {
+      setValidationError("Une erreur est survenue lors de la réservation.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#1f3d2a] text-white">
+      {paymentStatus ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-zinc-900 shadow-xl">
+            <p className="text-sm font-semibold">
+              {paymentStatus === "success"
+                ? "Paiement validé"
+                : "Paiement échoué"}
+            </p>
+            {paymentStatus === "success" ? (
+              <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs">
+                <p className="font-semibold text-zinc-900">Résumé de réservation</p>
+                <p className="mt-2">Atelier : {atelier.title}</p>
+                <p>Date : {selectedDay?.label ?? "-"}</p>
+                <p>Heure : {selectedTime ?? "-"}</p>
+                <p>Enfants : {childrenCount}</p>
+                <p>Adultes : {adultsCount}</p>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs">
+                <p className="font-semibold text-zinc-900">
+                  Aucune réservation n’a été enregistrée.
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setPaymentStatus(null)}
+              className="mt-4 w-full rounded-lg bg-[#1f3d2a] px-3 py-2 text-xs font-semibold text-white"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      ) : null}
       <section className="mx-auto flex w-full max-w-6xl flex-col px-6 pb-10 pt-6 min-h-[calc(100vh-80px)]">
         <nav className="text-xs font-semibold uppercase tracking-wide text-white/70">
           <a className="hover:text-white" href="/">
@@ -432,7 +779,17 @@ export default function PorteMonnaieDesAventuriersPage() {
 
           </div>
 
-          <aside className="sticky top-24 self-start">
+          <aside
+            ref={asideRef}
+            className={`${
+              showCalendar ? "" : "sticky top-24"
+            } self-start`}
+            style={
+              showCalendar && frozenOffset !== null
+                ? { marginTop: frozenOffset }
+                : undefined
+            }
+          >
             <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-xl">
               <div className="flex gap-3 rounded-full bg-zinc-100 p-2 text-sm font-semibold">
                 <button
@@ -475,12 +832,42 @@ export default function PorteMonnaieDesAventuriersPage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                <a
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!showCalendar && asideRef.current) {
+                      const rect = asideRef.current.getBoundingClientRect();
+                      const currentDocTop = rect.top + window.scrollY;
+                      const naturalTop =
+                        naturalTopRef.current ?? currentDocTop;
+                      setFrozenOffset(
+                        Math.max(currentDocTop - naturalTop, 0),
+                      );
+                    } else if (showCalendar) {
+                      setFrozenOffset(null);
+                    }
+
+                    setShowCalendar((prev) => !prev);
+                    if (!showCalendar) {
+                      requestAnimationFrame(() => {
+                        const target = bookingFormRef.current;
+                        if (!target) {
+                          return;
+                        }
+                        const rect = target.getBoundingClientRect();
+                        if (rect.top < 0) {
+                          target.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          });
+                        }
+                      });
+                    }
+                  }}
                   className="flex w-full items-center justify-center rounded-full bg-[#39c24a] px-4 py-3 text-sm font-extrabold text-white shadow-[0_6px_0_0_#1f8f34] transition-transform hover:-translate-y-0.5"
-                  href="/reservation"
                 >
                   RÉSERVER
-                </a>
+                </button>
                 <a
                   className="flex w-full items-center justify-center rounded-full bg-[#f8df5a] px-4 py-3 text-xs font-extrabold text-zinc-900 shadow-[0_6px_0_0_#d4b73d] transition-transform hover:-translate-y-0.5"
                   href="/contact"
@@ -488,6 +875,672 @@ export default function PorteMonnaieDesAventuriersPage() {
                   PRIVATISER POUR UN ANNIVERSAIRE
                 </a>
               </div>
+
+              {showCalendar ? (
+                <div
+                  ref={bookingFormRef}
+                  className="mt-6 rounded-2xl border border-[#e9d9c5] bg-[#f7efe3] p-4"
+                >
+                  <p className="text-sm font-semibold text-zinc-900">
+                    1. Choisir une date
+                  </p>
+                  <div className="mt-3 rounded-2xl border border-zinc-200 bg-white p-3">
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!canGoPrev) {
+                            return;
+                          }
+                          setSelectedDay(null);
+                          setSelectedTime(null);
+                          if (calendarMonthIndex === 0) {
+                            setCalendarYear((prev) => prev - 1);
+                            setCalendarMonthIndex(11);
+                          } else {
+                            setCalendarMonthIndex((prev) => prev - 1);
+                          }
+                        }}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${
+                          canGoPrev ? "bg-black" : "bg-zinc-300"
+                        }`}
+                        aria-label="Mois précédent"
+                        disabled={!canGoPrev}
+                      >
+                        <span className="text-lg">‹</span>
+                      </button>
+                      <p className="text-xs font-extrabold uppercase tracking-wide text-zinc-900">
+                        {calendarMonth} {calendarYear}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDay(null);
+                          setSelectedTime(null);
+                          if (calendarMonthIndex === 11) {
+                            setCalendarYear((prev) => prev + 1);
+                            setCalendarMonthIndex(0);
+                          } else {
+                            setCalendarMonthIndex((prev) => prev + 1);
+                          }
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white"
+                        aria-label="Mois suivant"
+                      >
+                        <span className="text-lg">›</span>
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-7 gap-2 text-center text-[11px] font-semibold text-zinc-700">
+                      {["Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam.", "Dim."].map(
+                        (dayLabel) => (
+                          <span key={dayLabel}>{dayLabel}</span>
+                        ),
+                      )}
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-7 gap-2">
+                      {calendarGrid.map((day, index) => {
+                        if (!day) {
+                          return <div key={`empty-${index}`} />;
+                        }
+
+                        const isSelected = selectedDay?.day === day.day;
+                        const isDisabled = day.status === "disabled";
+
+                        return (
+                          <button
+                            key={day.day}
+                            type="button"
+                            onClick={() =>
+                              isDisabled
+                                ? null
+                                : (setSelectedDay({
+                                    day: day.day,
+                                    label: `${day.day} ${calendarMonthLabel}`,
+                                    slots: day.slots,
+                                  }),
+                                  setSelectedTime(null),
+                                    setSelectedSessionId(null),
+                                    setSelectedSessionRemaining(null))
+                            }
+                            className={`flex h-9 items-center justify-center rounded-md border text-sm font-semibold transition-colors ${
+                              isSelected
+                                ? "border-[#df3b1a] bg-[#df3b1a] text-white"
+                                : isDisabled
+                                  ? "border-zinc-200 bg-zinc-100 text-zinc-400"
+                                  : "border-zinc-200 bg-white text-zinc-900 hover:border-[#1f3d2a]"
+                            }`}
+                            disabled={isDisabled}
+                          >
+                            {day.day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSessionDebug((prev) => !prev)}
+                    className="mt-3 text-xs font-semibold text-zinc-500 underline"
+                  >
+                    {showSessionDebug ? "Masquer" : "Voir"} les sessions (debug)
+                  </button>
+
+                  {showSessionDebug ? (
+                    <div className="mt-2 max-h-48 overflow-auto rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-600">
+                      <p className="mb-2">
+                        Atelier id: {atelierId ?? "(non chargé)"} · sessions: {sessions.length}
+                      </p>
+                      {sessions.length ? (
+                        <ul className="space-y-1">
+                          {sessions.map((session) => (
+                            <li key={session.id} className="flex flex-col">
+                              <span>
+                                {new Date(session.startAt).toLocaleString("fr-FR")}
+                              </span>
+                              <span>
+                                id: {session.id} · restant: {Math.max(Math.floor(session.unitsRemaining ?? 0), 0)} · statut: {session.status} · privé: {session.isPrivate ? "oui" : "non"}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>Aucune session pour cet atelier.</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSessionsDebug((prev) => !prev)}
+                    className="mt-2 text-xs font-semibold text-zinc-500 underline"
+                  >
+                    {showAllSessionsDebug ? "Masquer" : "Voir"} toutes les sessions (debug)
+                  </button>
+
+                  {showAllSessionsDebug ? (
+                    <div className="mt-2 max-h-56 overflow-auto rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-600">
+                      {allSessionsLoading ? (
+                        <p>Chargement des sessions…</p>
+                      ) : allSessionsDebug.length ? (
+                        <ul className="space-y-1">
+                          {allSessionsDebug.map((item) => (
+                            <li key={item.workshopId}>
+                              {item.workshopTitle} · sessions: {item.sessionsCount}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>Aucune session trouvée.</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {selectedDay ? (
+                    <div className="mt-4 rounded-2xl border border-[#e9d9c5] bg-[#f7efe3] p-4">
+                      <p className="text-sm font-semibold text-zinc-900">
+                        2. Choisir un créneau
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {timeSlots.length ? (
+                          timeSlots.map((slot) => {
+                            const isDisabled = slot.status === "disabled";
+                            const isSelected = selectedTime === slot.time;
+                            return (
+                              <button
+                                key={slot.sessionId}
+                                type="button"
+                                onClick={() =>
+                                  isDisabled
+                                    ? null
+                                    : (setSelectedTime(slot.time),
+                                      setSelectedSessionId(slot.sessionId),
+                                      setSelectedSessionRemaining(slot.unitsRemaining ?? 0))
+                                }
+                                className={`flex h-11 flex-col items-center justify-center gap-0.5 rounded-md border text-sm font-semibold transition-colors ${
+                                  isSelected
+                                    ? "border-[#df3b1a] bg-[#df3b1a] text-white"
+                                    : isDisabled
+                                      ? "border-zinc-200 bg-zinc-100 text-zinc-400"
+                                      : "border-zinc-200 bg-white text-zinc-900 hover:border-[#1f3d2a]"
+                                }`}
+                                disabled={isDisabled}
+                              >
+                                <span>{slot.time}</span>
+                                <span className="text-[10px] font-medium">
+                                  {Math.max(Math.floor(slot.unitsRemaining ?? 0), 0)} places
+                                </span>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="col-span-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
+                            Aucun créneau disponible pour cette date.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {selectedDay && selectedTime ? (
+                    <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">
+                      <p className="text-sm font-semibold text-zinc-900">
+                        Réservation pour {selectedDay.label} à {selectedTime}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {availableUnits} places disponibles
+                      </p>
+                      {reservationCompleted ? (
+                        <div className="mt-4 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white">
+                            ✓
+                          </span>
+                          <span className="font-semibold">
+                            Réservation déjà effectuée
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-3 grid gap-3 text-sm">
+                          <label className="grid gap-1">
+                            <span className="text-xs font-semibold text-zinc-600">Nom</span>
+                            <input
+                              value={bookingForm.lastName}
+                              onChange={(event) =>
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  lastName: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                              placeholder="Nom du responsable de la réservation"
+                              type="text"
+                            />
+                          </label>
+                          <label className="grid gap-1">
+                            <span className="text-xs font-semibold text-zinc-600">Prénom</span>
+                            <input
+                              value={bookingForm.firstName}
+                              onChange={(event) =>
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  firstName: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                              placeholder="Prénom du responsable de la réservation"
+                              type="text"
+                            />
+                          </label>
+                          <label className="grid gap-1">
+                            <span className="text-xs font-semibold text-zinc-600">Adresse mail</span>
+                            <input
+                              value={bookingForm.email}
+                              onChange={(event) =>
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  email: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                              placeholder="camille@email.com"
+                              type="email"
+                            />
+                          </label>
+                          <label className="grid gap-1">
+                            <span className="text-xs font-semibold text-zinc-600">
+                              Numéro de téléphone
+                            </span>
+                            <input
+                              value={bookingForm.phone}
+                              onChange={(event) =>
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  phone: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                              placeholder="06 00 00 00 00"
+                              type="tel"
+                            />
+                          </label>
+                          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setChildren((prev) => [
+                                  ...prev,
+                                  { firstName: "", ageRange: "" },
+                                ])
+                              }
+                              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-900 hover:border-[#1f3d2a]"
+                            >
+                              + Ajouter un enfant
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAdults((prev) => [
+                                  ...prev,
+                                  {
+                                    firstName: "",
+                                    lastName: "",
+                                    birthDate: "",
+                                    phone: "",
+                                  },
+                                ])
+                              }
+                              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-900 hover:border-[#1f3d2a]"
+                            >
+                              + Ajouter un adulte
+                            </button>
+                          </div>
+
+                          {children.length ? (
+                            <div className="space-y-2">
+                              {children.map((child, index) => (
+                                <details
+                                  key={`child-${index}`}
+                                  className="group rounded-xl border border-zinc-200 bg-white px-3 py-2"
+                                >
+                                  <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-semibold text-zinc-900">
+                                    <span>
+                                      {child.firstName.trim()
+                                        ? child.firstName
+                                        : "Informations enfant"}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      {index > 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.preventDefault();
+                                            setChildren((prev) =>
+                                              prev.filter(
+                                                (_, itemIndex) => itemIndex !== index,
+                                              ),
+                                            );
+                                          }}
+                                          className="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-rose-600"
+                                        >
+                                          Supprimer
+                                        </button>
+                                      ) : null}
+                                      <span className="text-zinc-400">▾</span>
+                                    </div>
+                                  </summary>
+                                  <div className="mt-3 grid gap-2">
+                                    <label className="grid gap-1">
+                                      <span className="text-xs font-semibold text-zinc-600">
+                                        Prénom
+                                      </span>
+                                      <input
+                                        value={child.firstName}
+                                        onChange={(event) =>
+                                          setChildren((prev) =>
+                                            prev.map((item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    firstName: event.target.value,
+                                                  }
+                                                : item,
+                                            ),
+                                          )
+                                        }
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                                        placeholder="Prénom"
+                                        type="text"
+                                      />
+                                    </label>
+                                    <label className="grid gap-1">
+                                      <span className="text-xs font-semibold text-zinc-600">
+                                        Tranche d'âge
+                                      </span>
+                                      <select
+                                        value={child.ageRange}
+                                        onChange={(event) =>
+                                          setChildren((prev) =>
+                                            prev.map((item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    ageRange: event.target.value,
+                                                  }
+                                                : item,
+                                            ),
+                                          )
+                                        }
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                                      >
+                                        <option value="">Sélectionner</option>
+                                        {ageRanges.map((range) => (
+                                          <option key={range} value={range}>
+                                            {range}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                  </div>
+                                </details>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {selectedDay && children.length > availableUnits ? (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                              Le nombre d'enfants dépasse les places disponibles ({availableUnits}).
+                            </div>
+                          ) : null}
+
+                          {adults.length ? (
+                            <div className="space-y-2">
+                              {adults.map((adult, index) => (
+                                <details
+                                  key={`adult-${index}`}
+                                  className="group rounded-xl border border-zinc-200 bg-white px-3 py-2"
+                                >
+                                  <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-semibold text-zinc-900">
+                                    <span>Adulte {index + 1}</span>
+                                    <div className="flex items-center gap-2">
+                                      {index === 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.preventDefault();
+                                            setAdults((prev) =>
+                                              prev.map((item, itemIndex) =>
+                                                itemIndex === 0
+                                                  ? {
+                                                      ...item,
+                                                      firstName: bookingForm.firstName,
+                                                      lastName: bookingForm.lastName,
+                                                      phone: bookingForm.phone,
+                                                    }
+                                                  : item,
+                                              ),
+                                            );
+                                          }}
+                                          className="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-700"
+                                        >
+                                          Moi
+                                        </button>
+                                      ) : null}
+                                      {index > 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.preventDefault();
+                                            setAdults((prev) =>
+                                              prev.filter(
+                                                (_, itemIndex) => itemIndex !== index,
+                                              ),
+                                            );
+                                          }}
+                                          className="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-rose-600"
+                                        >
+                                          Supprimer
+                                        </button>
+                                      ) : null}
+                                      <span className="text-zinc-400">▾</span>
+                                    </div>
+                                  </summary>
+                                  <div className="mt-3 grid gap-2">
+                                    <label className="grid gap-1">
+                                      <span className="text-xs font-semibold text-zinc-600">
+                                        Nom
+                                      </span>
+                                      <input
+                                        value={adult.lastName}
+                                        onChange={(event) =>
+                                          setAdults((prev) =>
+                                            prev.map((item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    lastName: event.target.value,
+                                                  }
+                                                : item,
+                                            ),
+                                          )
+                                        }
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                                        placeholder="Nom"
+                                        type="text"
+                                      />
+                                    </label>
+                                    <label className="grid gap-1">
+                                      <span className="text-xs font-semibold text-zinc-600">
+                                        Prénom
+                                      </span>
+                                      <input
+                                        value={adult.firstName}
+                                        onChange={(event) =>
+                                          setAdults((prev) =>
+                                            prev.map((item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    firstName: event.target.value,
+                                                  }
+                                                : item,
+                                            ),
+                                          )
+                                        }
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                                        placeholder="Prénom"
+                                        type="text"
+                                      />
+                                    </label>
+                                    <label className="grid gap-1">
+                                      <span className="text-xs font-semibold text-zinc-600">
+                                        Date de naissance
+                                      </span>
+                                      <input
+                                        value={adult.birthDate}
+                                        onChange={(event) =>
+                                          setAdults((prev) =>
+                                            prev.map((item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    birthDate: event.target.value,
+                                                  }
+                                                : item,
+                                            ),
+                                          )
+                                        }
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                                        placeholder="JJ/MM/AAAA"
+                                        type="text"
+                                      />
+                                    </label>
+                                    <label className="grid gap-1">
+                                      <span className="text-xs font-semibold text-zinc-600">
+                                        Numéro de téléphone
+                                      </span>
+                                      <input
+                                        value={adult.phone}
+                                        onChange={(event) =>
+                                          setAdults((prev) =>
+                                            prev.map((item, itemIndex) =>
+                                              itemIndex === index
+                                                ? {
+                                                    ...item,
+                                                    phone: event.target.value,
+                                                  }
+                                                : item,
+                                            ),
+                                          )
+                                        }
+                                        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                                        placeholder="06 00 00 00 00"
+                                        type="tel"
+                                      />
+                                    </label>
+                                  </div>
+                                </details>
+                              ))}
+                            </div>
+                          ) : null}
+                          <label className="mt-1 flex items-start gap-2 text-xs text-zinc-700">
+                            <input
+                              type="checkbox"
+                              checked={cgvAccepted}
+                              onChange={(event) => setCgvAccepted(event.target.checked)}
+                              className="mt-0.5 h-4 w-4 rounded border-zinc-300"
+                            />
+                            <span>
+                              J’accepte les{" "}
+                              <a className="font-semibold underline" href="/cgv">
+                                CGV
+                              </a>
+                              {" "}(obligatoire)
+                            </span>
+                          </label>
+                          <div className="mt-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-700">
+                            <div className="flex items-center justify-between">
+                              <span>Enfants x {childrenCount}</span>
+                              <span>{formatEuro(childrenCount * childrenPrice)}</span>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between">
+                              <span>Adultes x {adultsCount}</span>
+                              <span>{formatEuro(adultsCount * adultPrice)}</span>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between text-sm font-semibold text-zinc-900">
+                              <span>Total</span>
+                              <span>{formatEuro(finalTotal)}</span>
+                            </div>
+                          </div>
+                          {validationError ? (
+                            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                              {validationError}
+                            </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!isFormValid) {
+                                setValidationError(
+                                  "Merci de compléter tous les champs obligatoires avant le paiement.",
+                                );
+                                return;
+                              }
+                              setValidationError(null);
+                              setShowPayment(true);
+                            }}
+                            className={`w-full rounded-lg px-3 py-2 text-xs font-semibold text-white ${
+                              isFormValid
+                                ? "bg-[#39c24a]"
+                                : "bg-zinc-300 text-zinc-500"
+                            }`}
+                          >
+                            Payer pour réserver
+                          </button>
+
+                          {showPayment ? (
+                            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-3 text-xs">
+                              <p className="font-semibold text-zinc-900">
+                                Processeur de paiement
+                              </p>
+                              <div className="mt-2 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-3 py-4 text-center text-zinc-500">
+                                Champ de paiement (mock)
+                              </div>
+                              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                <button
+                                  type="button"
+                                  onClick={handlePaymentSuccess}
+                                  className="rounded-lg bg-[#1f3d2a] px-3 py-2 text-xs font-semibold text-white"
+                                >
+                                  Valider le paiement
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentStatus("failed")}
+                                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-900"
+                                >
+                                  Paiement échoué
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+                          <label className="grid gap-1">
+                            <span className="text-xs font-semibold text-zinc-600">
+                              Tarif final
+                            </span>
+                            <input
+                              value={formatEuro(finalTotal)}
+                              readOnly
+                              className="rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-700"
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </aside>
         </div>

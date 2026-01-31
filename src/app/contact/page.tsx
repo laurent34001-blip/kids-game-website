@@ -78,7 +78,7 @@ export default function ContactPage() {
               <label className="flex items-start gap-2 text-xs text-zinc-700">
                 <input type="checkbox" className="mt-1" required />
                 <span>
-                  En soumettant ce formulaire, j'autorise DJOGO à utiliser les
+                  En soumettant ce formulaire, j&apos;autorise DJOGO à utiliser les
                   informations renseignées pour me recontacter.
                 </span>
               </label>
