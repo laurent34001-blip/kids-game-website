@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
 
-const isValidDate = (value: string) => !Number.isNaN(new Date(value).getTime());
+const isValidDate = (value: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const parseLocalDate = (value: string) => {
+  const [year, month, day] = value.split("-").map((part) => Number(part));
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1, 0, 0, 0, 0);
+};
 
 const withTime = (date: Date, time: string) => {
   const [hour, minute] = time.split(":").map((part) => Number(part));
@@ -58,9 +64,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const startDate = new Date(from);
-  startDate.setHours(0, 0, 0, 0);
-  const endDate = new Date(to);
+  const startDate = parseLocalDate(from);
+  const endDate = parseLocalDate(to);
   endDate.setHours(23, 59, 59, 999);
 
   if (startDate > endDate) {

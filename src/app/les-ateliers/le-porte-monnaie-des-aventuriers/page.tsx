@@ -53,7 +53,6 @@ export default function PorteMonnaieDesAventuriersPage() {
   const [priceMode, setPriceMode] = useState<"solo" | "duo">("duo");
   const [isFading, setIsFading] = useState(false);
   const [atelier, setAtelier] = useState(defaultAtelier);
-  const [atelierId, setAtelierId] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [frozenOffset, setFrozenOffset] = useState<number | null>(null);
   const asideRef = useRef<HTMLDivElement | null>(null);
@@ -93,7 +92,12 @@ export default function PorteMonnaieDesAventuriersPage() {
   const [showSessionDebug, setShowSessionDebug] = useState(false);
   const [showAllSessionsDebug, setShowAllSessionsDebug] = useState(false);
   const [allSessionsDebug, setAllSessionsDebug] = useState<
-    Array<{ workshopTitle: string; workshopId: string; sessionsCount: number }>
+    Array<{
+      workshopTitle: string;
+      workshopId: string;
+      workshopSlug: string;
+      sessionsCount: number;
+    }>
   >([]);
   const [allSessionsLoading, setAllSessionsLoading] = useState(false);
   const [sessions, setSessions] = useState<
@@ -147,7 +151,6 @@ export default function PorteMonnaieDesAventuriersPage() {
               }))
             : defaultAtelier.reviews,
         });
-        setAtelierId((remote as { id?: string }).id ?? null);
       })
       .catch(() => null);
 
@@ -166,11 +169,7 @@ export default function PorteMonnaieDesAventuriersPage() {
   }, []);
 
   useEffect(() => {
-    if (!atelierId) {
-      return;
-    }
-
-    fetch(`/api/ateliers/${atelierId}/disponibilites`)
+    fetch(`/api/ateliers/slug/${defaultAtelier.slug}/disponibilites`)
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (!data?.data) {
@@ -179,7 +178,7 @@ export default function PorteMonnaieDesAventuriersPage() {
         setSessions(data.data);
       })
       .catch(() => null);
-  }, [atelierId]);
+  }, []);
 
   useEffect(() => {
     if (!showAllSessionsDebug) {
@@ -196,11 +195,20 @@ export default function PorteMonnaieDesAventuriersPage() {
           return;
         }
 
-        const ateliers: Array<{ id: string; title: string }> = data.data;
+        const ateliers: Array<{ id: string; title: string; slug?: string | null }> =
+          data.data;
         const results = await Promise.all(
           ateliers.map(async (atelierItem) => {
+            if (!atelierItem.slug) {
+              return {
+                workshopTitle: atelierItem.title,
+                workshopId: atelierItem.id,
+                workshopSlug: "",
+                sessionsCount: 0,
+              };
+            }
             const response = await fetch(
-              `/api/ateliers/${atelierItem.id}/disponibilites`,
+              `/api/ateliers/slug/${atelierItem.slug}/disponibilites`,
             );
             const sessionsData = response.ok ? await response.json() : null;
             const sessionsCount = Array.isArray(sessionsData?.data)
@@ -209,6 +217,7 @@ export default function PorteMonnaieDesAventuriersPage() {
             return {
               workshopTitle: atelierItem.title,
               workshopId: atelierItem.id,
+              workshopSlug: atelierItem.slug ?? "",
               sessionsCount,
             };
           }),
@@ -329,6 +338,7 @@ export default function PorteMonnaieDesAventuriersPage() {
       status: isDisabled ? "disabled" : "available",
       sessionId: session.id,
       unitsRemaining: session.unitsRemaining,
+      isPast,
     };
   });
 
@@ -991,7 +1001,7 @@ export default function PorteMonnaieDesAventuriersPage() {
                   {showSessionDebug ? (
                     <div className="mt-2 max-h-48 overflow-auto rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-600">
                       <p className="mb-2">
-                        Atelier id: {atelierId ?? "(non chargé)"} · sessions: {sessions.length}
+                        Atelier slug: {defaultAtelier.slug} · sessions: {sessions.length}
                       </p>
                       {sessions.length ? (
                         <ul className="space-y-1">
@@ -1028,7 +1038,7 @@ export default function PorteMonnaieDesAventuriersPage() {
                         <ul className="space-y-1">
                           {allSessionsDebug.map((item) => (
                             <li key={item.workshopId}>
-                              {item.workshopTitle} · sessions: {item.sessionsCount}
+                              {item.workshopTitle} ({item.workshopSlug || "sans slug"}) · sessions: {item.sessionsCount}
                             </li>
                           ))}
                         </ul>
@@ -1069,9 +1079,11 @@ export default function PorteMonnaieDesAventuriersPage() {
                                 disabled={isDisabled}
                               >
                                 <span>{slot.time}</span>
-                                <span className="text-[10px] font-medium">
-                                  {Math.max(Math.floor(slot.unitsRemaining ?? 0), 0)} places
-                                </span>
+                                {slot.isPast ? null : (
+                                  <span className="text-[10px] font-medium">
+                                    {Math.max(Math.floor(slot.unitsRemaining ?? 0), 0)} places
+                                  </span>
+                                )}
                               </button>
                             );
                           })

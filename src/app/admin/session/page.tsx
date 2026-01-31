@@ -62,6 +62,9 @@ const withTime = (date: Date, hours: number, minutes: number) => {
   return next;
 };
 
+const formatDateInput = (date: Date) =>
+  date.toLocaleDateString("en-CA");
+
 export default async function AdminSessionPage() {
   const session = await getAdminSession();
 
@@ -200,7 +203,7 @@ export default async function AdminSessionPage() {
         initialSessions={formattedSessions}
         workshops={formattedWorkshops}
         rooms={formattedRooms}
-        initialStartDate={startOfWeek.toISOString()}
+        initialStartDate={formatDateInput(startOfWeek)}
       />
     </main>
   );

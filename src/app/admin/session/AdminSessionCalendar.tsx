@@ -42,6 +42,11 @@ const timeSlots = ["09:00", "11:00", "14:00", "16:00"];
 const formatDateInput = (date: Date) =>
   date.toLocaleDateString("en-CA");
 
+const parseLocalDate = (value: string) => {
+  const [year, month, day] = value.split("-").map((part) => Number(part));
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1, 0, 0, 0, 0);
+};
+
 const formatTimeLabel = (date: Date) =>
   date.toLocaleTimeString("fr-FR", {
     hour: "2-digit",
@@ -112,7 +117,7 @@ export default function AdminSessionCalendar({
   const [isMounted, setIsMounted] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>(initialSessions);
   const [startDate, setStartDate] = useState<Date>(
-    new Date(initialStartDate),
+    parseLocalDate(initialStartDate),
   );
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     initialSessions[0]?.id ?? null,
@@ -120,18 +125,19 @@ export default function AdminSessionCalendar({
   const [movingSessionId, setMovingSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slotTabs, setSlotTabs] = useState<Record<string, string>>({});
 
   const [newSession, setNewSession] = useState({
     workshopId: workshops[0]?.id ?? "",
     roomId: defaultRoom?.id ?? "",
-    date: formatDateInput(new Date(initialStartDate)),
+    date: formatDateInput(parseLocalDate(initialStartDate)),
     time: timeSlots[0],
     maxUnits: 10.5,
   });
 
   const [batchState, setBatchState] = useState({
-    from: formatDateInput(new Date(initialStartDate)),
-    to: formatDateInput(addDays(new Date(initialStartDate), 6)),
+    from: formatDateInput(parseLocalDate(initialStartDate)),
+    to: formatDateInput(addDays(parseLocalDate(initialStartDate), 6)),
     roomId: defaultRoom?.id ?? "",
     maxUnits: 10.5,
     timeSlots: [...timeSlots],
@@ -145,6 +151,9 @@ export default function AdminSessionCalendar({
     status: "OPEN" as SessionItem["status"],
     isPrivate: false,
   });
+  const [deletedBatchCount, setDeletedBatchCount] = useState<number | null>(
+    null,
+  );
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, idx) => addDays(startDate, idx)),
@@ -152,11 +161,13 @@ export default function AdminSessionCalendar({
   );
 
   const sessionsBySlot = useMemo(() => {
-    const map = new Map<string, SessionItem>();
+    const map = new Map<string, SessionItem[]>();
     sessions.forEach((session) => {
       const date = new Date(session.startAt);
       const time = formatTimeLabel(date);
-      map.set(getSlotKey(date, time), session);
+      const key = getSlotKey(date, time);
+      const list = map.get(key) ?? [];
+      map.set(key, [...list, session]);
     });
     return map;
   }, [sessions]);
@@ -185,8 +196,8 @@ export default function AdminSessionCalendar({
     setError(null);
     const rangeEnd = addDays(rangeStart, 6);
     const params = new URLSearchParams({
-      from: rangeStart.toISOString(),
-      to: rangeEnd.toISOString(),
+      from: formatDateInput(rangeStart),
+      to: formatDateInput(rangeEnd),
     });
 
     try {
@@ -372,6 +383,43 @@ export default function AdminSessionCalendar({
     }
   };
 
+  const handleDeleteBatch = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (batchState.timeSlots.length === 0) {
+        throw new Error("Sélectionnez au moins un créneau horaire.");
+      }
+
+      const response = await fetch("/api/sessions/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: batchState.from,
+          to: batchState.to,
+          roomId: batchState.roomId,
+          timeSlots: batchState.timeSlots,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(payload?.error ?? "Suppression du lot impossible.");
+      }
+
+      const payload = (await response.json()) as { deleted: number };
+      setDeletedBatchCount(payload.deleted ?? 0);
+      await loadSessions(startDate);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const updateSession = async (
     sessionId: string,
     payload: Record<string, unknown>,
@@ -466,8 +514,8 @@ export default function AdminSessionCalendar({
     }
 
     const slotKey = getSlotKey(date, time);
-    const occupied = sessionsBySlot.get(slotKey);
-    if (occupied && occupied.id !== session.id) {
+    const occupied = sessionsBySlot.get(slotKey) ?? [];
+    if (occupied.some((item) => item.id !== session.id)) {
       setError("Ce créneau est déjà occupé.");
       return;
     }
@@ -530,7 +578,7 @@ export default function AdminSessionCalendar({
   }
 
   return (
-    <section className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
+    <section className="mt-8 space-y-8">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -564,6 +612,26 @@ export default function AdminSessionCalendar({
           </div>
         ) : null}
 
+        {deletedBatchCount !== null ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-lg">
+              <h3 className="text-lg font-semibold text-zinc-900">
+                Suppression effectuée
+              </h3>
+              <p className="mt-2 text-sm text-zinc-600">
+                {deletedBatchCount} session(s) supprimée(s).
+              </p>
+              <button
+                type="button"
+                onClick={() => setDeletedBatchCount(null)}
+                className="mt-6 w-full rounded-2xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white">
           <div className="grid grid-cols-[120px_repeat(7,minmax(0,1fr))] border-b border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-600">
             <div className="px-4 py-3">Horaire</div>
@@ -584,7 +652,11 @@ export default function AdminSessionCalendar({
               </div>
               {days.map((date) => {
                 const slotKey = getSlotKey(date, slot);
-                const session = sessionsBySlot.get(slotKey) ?? null;
+                const slotSessions = sessionsBySlot.get(slotKey) ?? [];
+                const activeTabId = slotTabs[slotKey] ?? slotSessions[0]?.id;
+                const session = slotSessions.find(
+                  (item) => item.id === activeTabId,
+                );
                 return (
                   <div
                     key={slotKey}
@@ -597,7 +669,7 @@ export default function AdminSessionCalendar({
                         handleSlotClick(date, slot);
                       }
                     }}
-                    className={`group flex min-h-[96px] w-full flex-col items-start justify-between gap-2 px-3 py-3 text-left text-xs transition ${
+                    className={`group flex aspect-square w-full min-h-[110px] flex-col items-start justify-between gap-2 px-3 py-3 text-left text-xs transition ${
                       movingSessionId
                         ? "bg-amber-50"
                         : "hover:bg-zinc-50"
@@ -615,6 +687,34 @@ export default function AdminSessionCalendar({
                           setSelectedSessionId(session.id);
                         }}
                       >
+                        {slotSessions.length > 1 ? (
+                          <div className="mb-2 flex flex-wrap gap-1">
+                            {slotSessions.map((slotSession) => {
+                              const isActive = slotSession.id === session.id;
+                              return (
+                                <button
+                                  key={slotSession.id}
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setSlotTabs((prev) => ({
+                                      ...prev,
+                                      [slotKey]: slotSession.id,
+                                    }));
+                                    setSelectedSessionId(slotSession.id);
+                                  }}
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                                    isActive
+                                      ? "bg-white/90 text-zinc-900"
+                                      : "bg-zinc-100 text-zinc-500"
+                                  }`}
+                                >
+                                  {slotSession.workshopTitle}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
                         <div className="font-semibold">
                           {session.workshopTitle}
                         </div>
@@ -642,11 +742,11 @@ export default function AdminSessionCalendar({
                           </button>
                         </div>
                       </div>
-                    ) : (
+                    ) : movingSessionId ? (
                       <div className="text-[10px] text-zinc-400">
-                        {movingSessionId ? "Cliquer pour déplacer" : "Libre"}
+                        Cliquer pour déplacer
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -659,7 +759,7 @@ export default function AdminSessionCalendar({
         ) : null}
       </div>
 
-      <aside className="space-y-6">
+      <aside className="grid gap-6 lg:grid-cols-3">
         <form
           onSubmit={handleCreateSession}
           className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm"
@@ -796,7 +896,7 @@ export default function AdminSessionCalendar({
         >
           <h3 className="text-lg font-semibold">Créer un lot de sessions</h3>
           <p className="mt-1 text-xs text-zinc-500">
-            Génère automatiquement 1 session par atelier et par jour.
+            Génère automatiquement 1 session par atelier et par créneau.
           </p>
 
           <div className="mt-4 space-y-3 text-sm">
@@ -910,10 +1010,19 @@ export default function AdminSessionCalendar({
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || batchState.timeSlots.length === 0}
             className="mt-5 w-full rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isLoading ? "Création en cours..." : "Créer le lot"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDeleteBatch}
+            disabled={isLoading || batchState.timeSlots.length === 0}
+            className="mt-2 w-full rounded-2xl border border-rose-200 px-4 py-3 text-sm font-semibold text-rose-700 disabled:opacity-60"
+          >
+            Supprimer le lot
           </button>
         </form>
 

@@ -3,18 +3,53 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
 
-const isValidDate = (value: string) => !Number.isNaN(new Date(value).getTime());
+const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const parseLocalDate = (value: string, endOfDay = false) => {
+  if (!isDateOnly(value)) {
+    return null;
+  }
+  const [year, month, day] = value.split("-").map((part) => Number(part));
+  const date = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1, 0, 0, 0, 0);
+  if (endOfDay) {
+    date.setHours(23, 59, 59, 999);
+  }
+  return date;
+};
+
+const parseDateTime = (value: string) => {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const addDays = (date: Date, amount: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
 
-  const fromDate = fromParam && isValidDate(fromParam) ? new Date(fromParam) : null;
-  const toDate = toParam && isValidDate(toParam) ? new Date(toParam) : null;
+  const fromDate = fromParam
+    ? parseLocalDate(fromParam) ?? parseDateTime(fromParam)
+    : null;
+  const toDate = toParam
+    ? parseLocalDate(toParam, true) ?? parseDateTime(toParam)
+    : null;
 
-  const from = fromDate ?? new Date();
-  const to = toDate ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+  const from = fromDate ?? (() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now;
+  })();
+  const to = toDate ?? (() => {
+    const end = addDays(from, 6);
+    end.setHours(23, 59, 59, 999);
+    return end;
+  })();
 
   const sessions = await prisma.session.findMany({
     where: {
@@ -58,7 +93,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Champs requis manquants." }, { status: 400 });
   }
 
-  if (!isValidDate(startAt) || !isValidDate(endAt)) {
+  if (!parseDateTime(startAt) || !parseDateTime(endAt)) {
     return NextResponse.json({ error: "Dates invalides." }, { status: 400 });
   }
 
