@@ -100,8 +100,18 @@ export async function PUT(
     where: { id },
     data: updates,
     include: {
-      workshop: true,
-      room: true,
+      workshop: {
+        select: {
+          title: true,
+          durationMinutes: true,
+          category: true,
+        },
+      },
+      room: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 

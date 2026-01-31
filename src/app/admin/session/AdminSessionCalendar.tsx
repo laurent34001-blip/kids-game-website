@@ -23,6 +23,7 @@ type SessionItem = {
   isPrivate: boolean;
   workshopId: string;
   workshopTitle: string;
+  workshopCategory: string;
   roomId: string;
   roomName: string;
   durationMinutes: number;
@@ -35,6 +36,22 @@ type AdminSessionCalendarProps = {
   workshops: WorkshopOption[];
   rooms: RoomOption[];
   initialStartDate: string;
+};
+
+const getBgImage = (title: string) => {
+  if (title.includes("porte-monnaie") || title.includes("Porte-monnaie")) {
+    return "/images/cat_portefeuille.webp";
+  }
+  if (title.includes("céréales") || title.includes("Barres")) {
+    return "/images/cat_cereal.webp";
+  }
+  if (title.includes("peinture") || title.includes("Peinture")) {
+    return "/images/cat_peinture.webp";
+  }
+  if (title.includes("dominos") || title.includes("Dominos")) {
+    return "/images/cat_domino.webp";
+  }
+  return "";
 };
 
 const timeSlots = ["09:00", "11:00", "14:00", "16:00"];
@@ -84,7 +101,7 @@ const toSessionItem = (data: {
   status: SessionItem["status"];
   isPrivate: boolean;
   workshopId: string;
-  workshop: { title: string; durationMinutes: number };
+  workshop: { title: string; durationMinutes: number; category?: string };
   roomId: string;
   room: { name: string };
   unitsUsed: number;
@@ -98,6 +115,7 @@ const toSessionItem = (data: {
   isPrivate: data.isPrivate,
   workshopId: data.workshopId,
   workshopTitle: data.workshop.title,
+  workshopCategory: data.workshop.category || 'UNKNOWN',
   roomId: data.roomId,
   roomName: data.room.name,
   durationMinutes: data.workshop.durationMinutes,
@@ -338,44 +356,57 @@ export default function AdminSessionCalendar({
         throw new Error("Sélectionnez au moins un créneau horaire.");
       }
 
-      const response = await fetch("/api/sessions/batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: batchState.from,
-          to: batchState.to,
-          roomId: batchState.roomId,
-          maxUnits: Number(batchState.maxUnits),
-          timeSlots: batchState.timeSlots,
-        }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(payload?.error ?? "Création du lot impossible.");
+      const fromDate = parseLocalDate(batchState.from);
+      const toDate = parseLocalDate(batchState.to);
+      const days = [];
+      for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+        days.push(new Date(d));
       }
 
-      const payload = (await response.json()) as {
-        data: Array<{
-          id: string;
-          startAt: string;
-          endAt: string;
-          maxUnits: number;
-          status: SessionItem["status"];
-          isPrivate: boolean;
-          workshopId: string;
-          workshop: { title: string; durationMinutes: number };
-          roomId: string;
-          room: { name: string };
-          unitsUsed: number;
-          totalParticipants: number;
-        }>;
-      };
+      const createdIds = [];
+      for (const day of days) {
+        for (const workshop of workshops) {
+          for (const timeSlot of batchState.timeSlots) {
+            const [hourStr, minuteStr] = timeSlot.split(':');
+            const hour = Number(hourStr);
+            const minute = Number(minuteStr);
+            const startAt = new Date(day);
+            startAt.setHours(hour, minute, 0, 0);
+            const endAt = new Date(startAt.getTime() + workshop.durationMinutes * 60 * 1000);
 
-      const firstCreatedId = payload.data[0]?.id ?? null;
-      await loadSessions(startDate, firstCreatedId);
+            // check if already exists in current sessions
+            const existing = sessions.find(s => s.workshopId === workshop.id && new Date(s.startAt).getTime() === startAt.getTime());
+            if (existing) continue;
+
+            try {
+              const response = await fetch("/api/sessions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  workshopId: workshop.id,
+                  roomId: batchState.roomId,
+                  startAt: startAt.toISOString(),
+                  endAt: endAt.toISOString(),
+                  maxUnits: Number(batchState.maxUnits),
+                }),
+              });
+
+              if (response.ok) {
+                const payload = await response.json();
+                createdIds.push(payload.data.id);
+              }
+            } catch (err) {
+              // ignore errors for individual creations
+            }
+          }
+        }
+      }
+
+      if (createdIds.length > 0) {
+        setStartDate(parseLocalDate(batchState.from));
+      } else {
+        throw new Error("Aucune session créée.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -632,8 +663,9 @@ export default function AdminSessionCalendar({
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white">
-          <div className="grid grid-cols-[120px_repeat(7,minmax(0,1fr))] border-b border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-600">
+        <div className="overflow-x-auto rounded-3xl border border-zinc-200 bg-white">
+          <div className="min-w-[1260px]">
+            <div className="grid grid-cols-[120px_repeat(7,minmax(220px,1fr))] divide-x divide-zinc-200 border-b border-zinc-300 bg-zinc-50 text-xs font-semibold text-zinc-600">
             <div className="px-4 py-3">Horaire</div>
             {days.map((date) => (
               <div key={date.toISOString()} className="px-3 py-3">
@@ -645,7 +677,7 @@ export default function AdminSessionCalendar({
           {timeSlots.map((slot) => (
             <div
               key={slot}
-              className="grid grid-cols-[120px_repeat(7,minmax(0,1fr))] border-b border-zinc-100"
+              className="grid grid-cols-[120px_repeat(7,minmax(220px,1fr))] divide-x divide-zinc-200 border-b border-zinc-200"
             >
               <div className="flex items-center px-4 py-4 text-xs font-semibold text-zinc-600">
                 {slot}
@@ -669,28 +701,38 @@ export default function AdminSessionCalendar({
                         handleSlotClick(date, slot);
                       }
                     }}
-                    className={`group flex aspect-square w-full min-h-[110px] flex-col items-start justify-between gap-2 px-3 py-3 text-left text-xs transition ${
+                    className={`group flex w-full min-h-[110px] flex-col items-start justify-between gap-2 px-3 py-3 text-left text-xs transition ${
                       movingSessionId
                         ? "bg-amber-50"
                         : "hover:bg-zinc-50"
                     }`}
+                    style={{ minHeight: 110, height: 'auto', minWidth: 220, width: '100%', maxWidth: 400, overflow: 'visible' }}
                   >
                     {session ? (
                       <div
-                        className={`w-full rounded-2xl border px-3 py-2 text-xs ${
+                        className={`w-full rounded-2xl border text-xs text-white ${
                           session.id === selectedSessionId
-                            ? "border-zinc-900 bg-zinc-900 text-white"
-                            : "border-zinc-200 bg-white text-zinc-700"
+                            ? "border-zinc-900"
+                            : "border-zinc-200"
                         }`}
+                        style={{
+                          backgroundImage: `linear-gradient(${session.id === selectedSessionId ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)'}, ${session.id === selectedSessionId ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)'}), url(${getBgImage(session.workshopTitle)})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }}
                         onClick={(event) => {
                           event.stopPropagation();
                           setSelectedSessionId(session.id);
                         }}
                       >
                         {slotSessions.length > 1 ? (
-                          <div className="mb-2 flex flex-wrap gap-1">
+                          <div className="flex flex-row gap-1 overflow-x-hidden">
                             {slotSessions.map((slotSession) => {
                               const isActive = slotSession.id === session.id;
+                              // Affiche les 6 premiers caractères puis ... si besoin
+                              const tabLabel = slotSession.workshopTitle.length > 6
+                                ? slotSession.workshopTitle.slice(0, 6) + '...'
+                                : slotSession.workshopTitle;
                               return (
                                 <button
                                   key={slotSession.id}
@@ -703,43 +745,46 @@ export default function AdminSessionCalendar({
                                     }));
                                     setSelectedSessionId(slotSession.id);
                                   }}
-                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                                  className={`relative flex items-center px-3 py-1 text-[11px] font-medium border-b-2 transition-all rounded-t-md shadow-sm ${
                                     isActive
-                                      ? "bg-white/90 text-zinc-900"
-                                      : "bg-zinc-100 text-zinc-500"
+                                      ? "bg-white border-zinc-900 text-zinc-900 z-10"
+                                      : "bg-zinc-100 border-transparent text-zinc-500 hover:bg-zinc-200 z-0"
                                   }`}
+                                  style={{ minWidth: 48, maxWidth: 90 }}
                                 >
-                                  {slotSession.workshopTitle}
+                                  <span className="truncate max-w-[60px]">{tabLabel}</span>
                                 </button>
                               );
                             })}
                           </div>
                         ) : null}
-                        <div className="font-semibold">
-                          {session.workshopTitle}
-                        </div>
-                        <div className="mt-1 text-[11px] text-zinc-500">
-                          {session.roomName} · {session.maxUnits} unités
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600">
-                            {session.status}
-                          </span>
-                          <span className="text-[10px] text-zinc-500">
-                            {session.totalParticipants} pers.
-                          </span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setMovingSessionId(session.id);
-                            }}
-                            className="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-600"
-                          >
-                            Déplacer
-                          </button>
+                        <div className="px-3 py-2">
+                          <div className="font-semibold">
+                            {session.workshopTitle}
+                          </div>
+                          <div className="mt-1 text-[11px] text-white">
+                            {session.roomName} · {session.maxUnits} unités
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600">
+                              {session.status}
+                            </span>
+                            <span className={`text-[10px] ${session.totalParticipants >= 10 ? 'text-green-400' : session.totalParticipants >= 6 ? 'text-blue-400' : 'text-white'}`}>
+                              {session.totalParticipants} pers.
+                            </span>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setMovingSessionId(session.id);
+                              }}
+                              className="rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-600"
+                            >
+                              Déplacer
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : movingSessionId ? (
@@ -752,6 +797,7 @@ export default function AdminSessionCalendar({
               })}
             </div>
           ))}
+          </div>
         </div>
 
         {isLoading ? (

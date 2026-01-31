@@ -162,6 +162,7 @@ export default async function AdminSessionPage() {
     isPrivate: item.isPrivate,
     workshopId: item.workshopId,
     workshopTitle: item.workshop.title,
+    workshopCategory: item.workshop.category,
     roomId: item.roomId,
     roomName: item.room.name,
     durationMinutes: item.workshop.durationMinutes,

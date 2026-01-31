@@ -59,8 +59,18 @@ export async function GET(request: NextRequest) {
       },
     },
     include: {
-      workshop: true,
-      room: true,
+      workshop: {
+        select: {
+          title: true,
+          durationMinutes: true,
+          category: true,
+        },
+      },
+      room: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: { startAt: "asc" },
   });
@@ -142,8 +152,18 @@ export async function POST(request: NextRequest) {
       isPrivate: false,
     },
     include: {
-      workshop: true,
-      room: true,
+      workshop: {
+        select: {
+          title: true,
+          durationMinutes: true,
+          category: true,
+        },
+      },
+      room: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
