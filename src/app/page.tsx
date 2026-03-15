@@ -2,18 +2,27 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#f7efe3] text-zinc-900">
       <main className="w-full">
-        <section className="relative min-h-[calc(100vh-80px)] border-b-[2rem] border-l-[2rem] border-r-[2rem] border-[var(--brand-colors-brand-red-djogo)] bg-[#f7efe3]">
-          <div className="absolute -bottom-8 -left-8 h-8 w-8 bg-[#f7efe3]" />
-          <div className="absolute -bottom-8 -right-8 h-8 w-8 bg-[#f7efe3]" />
-          <div className="mx-auto grid min-h-[calc(100vh-80px-2rem)] w-full max-w-6xl items-stretch gap-8 px-6 py-6 lg:grid-cols-[1.05fr_1fr]">
+        {/* hero replaced by video background */}
+        <section className="relative min-h-[calc(100vh-80px)] overflow-hidden">
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src="/videos/hero.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+          <div className="absolute inset-0 bg-black/30" />
+
+          <div className="relative mx-auto grid min-h-[calc(100vh-80px)] w-full max-w-6xl items-center gap-8 px-6 py-6 lg:grid-cols-[1.05fr_1fr]">
             <div className="flex flex-col justify-center">
-              <h1 className="text-3xl font-extrabold leading-tight text-zinc-900 md:text-4xl">
+              <h1 className="text-3xl font-extrabold leading-tight text-white md:text-4xl">
                 Le nouveau lieu 100% ateliers manuels immersifs pour 3 à 12 ans !
               </h1>
-              <p className="mt-4 text-base text-zinc-700 md:text-lg">
+              <p className="mt-4 text-base text-white/90 md:text-lg">
                 Un concept de 400m2 inédit où l&apos;on fait comme les artisans, seul ou en famille 🔨
               </p>
-              <p className="mt-6 text-base font-semibold text-orange-600">
+              <p className="mt-6 text-base font-semibold text-orange-400">
                 Ouverture ce samedi 24 janvier, réservez vos places dès maintenant !
               </p>
               <div className="hero-cta mt-6">
@@ -24,64 +33,45 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="h-full overflow-hidden rounded-3xl bg-white shadow-xl">
-              <img
-                className="h-full w-full object-cover"
-                src="/hero.webp"
-                alt="Enfant réalisant un atelier manuel"
-              />
-            </div>
+            <div />
           </div>
         </section>
 
-        <section className="bg-[linear-gradient(to_bottom,#f7efe3_0%,#f7efe3_50%,#ffffff_50%,#ffffff_100%)]">
+        {/* 3 Blocs */}
+        <section className="bg-[#f7efe3]">
           <div className="mx-auto w-full max-w-6xl px-6 py-12">
-            <h2 className="text-center text-2xl font-extrabold text-zinc-900 md:text-3xl">
-              Dans la peau d&apos;artisans, chefs et artistes pendant 1h30 🔨🧑‍🍳🎨
-            </h2>
-            <div className="mt-10 grid gap-6 md:grid-cols-3">
-              {[
-                {
-                  title:
-                    "Art, cuisine ou fabrication : 4 salles immersives sans écrans, où l'on fait comme les grands",
-                  color: "bg-[var(--brand-colors-brand-red-djogo)]",
-                  textClass: "text-[var(--brand-colors-brand-yellow-djogo)]",
-                  image: "/images/photo_art.webp",
-                  alt: "Atelier artisanal",
-                },
-                {
-                  title:
-                    "Défis, histoires, décors : Vivez nos ateliers avec vos enfants ou laissez les faire seuls !",
-                  color: "bg-[var(--brand-colors-brand-yellow-djogo)]",
-                  textClass: "text-[var(--brand-colors-brand-red-djogo)]",
-                  image: "/images/photo_cuisine.webp",
-                  alt: "Atelier en famille",
-                },
-                {
-                  title:
-                    '"C\'est moi qui l\'ai fait" : Repartez avec vos créations et profitez de notre espace café !',
-                  color: "bg-[var(--brand-colors-brand-red-djogo)]",
-                  textClass: "text-[var(--brand-colors-brand-yellow-djogo)]",
-                  image: "/images/photo_peinture.webp",
-                  alt: "Créations artisanales",
-                },
-              ].map((item) => (
-                <article
-                  key={item.title}
-                  className={`${item.color} rounded-3xl p-5 shadow-lg`}
-                >
-                  <p className={`text-lg font-bold ${item.textClass}`}>
-                    {item.title}
-                  </p>
-                  <div className="mt-5 overflow-hidden rounded-2xl bg-white">
-                    <img
-                      className="h-[320px] w-full object-cover"
-                      src={item.image}
-                      alt={item.alt}
-                    />
-                  </div>
-                </article>
-              ))}
+            <div className="grid gap-8 md:grid-cols-3">
+              <div className="rounded-2xl bg-white p-8 text-center shadow-md">
+                <div className="mb-4 flex justify-center">
+                  <svg className="h-12 w-12 text-[var(--brand-colors-brand-red-djogo)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="7" cy="6" r="1.5" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="17" cy="6" r="1.5" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="12" cy="12" r="1.5" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M7 7.5C7 9 6 11 6 12C6 14 8 18 12 18C16 18 18 14 18 12C18 11 17 9 17 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-base font-semibold text-zinc-900">Des expériences pour les enfants de 3 à 14 ans</p>
+              </div>
+
+              <div className="rounded-2xl bg-white p-8 text-center shadow-md">
+                <div className="mb-4 flex justify-center">
+                  <svg className="h-12 w-12 text-[var(--brand-colors-brand-red-djogo)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9L12 3L21 9V21H3V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 21V12H15V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-base font-semibold text-zinc-900">4 ateliers immersifs qui changent tous les 2 mois</p>
+              </div>
+
+              <div className="rounded-2xl bg-white p-8 text-center shadow-md">
+                <div className="mb-4 flex justify-center">
+                  <svg className="h-12 w-12 text-[var(--brand-colors-brand-red-djogo)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M12 7V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-base font-semibold text-zinc-900">Des ateliers d&apos;1h30 où l&apos;on repart avec sa création</p>
+              </div>
             </div>
           </div>
         </section>
@@ -90,10 +80,10 @@ export default function Home() {
           <div className="mx-auto w-full max-w-none px-6 py-12">
             <div className="text-center">
               <p className="text-2xl font-extrabold text-[var(--brand-colors-brand-red-djogo)] md:text-3xl">
-                Découvrez nos premiers ateliers co-conçus avec nos artisans !
+                On tape, on scie, on peint : nos supers ateliers du moment ⭐
               </p>
               <p className="mt-2 text-sm text-zinc-700 md:text-base">
-                Du 24.01.2026 au 30.04.2026
+                2 nouveaux dès début Avril
               </p>
             </div>
 
@@ -194,6 +184,58 @@ export default function Home() {
                     >
                       VOIR L&apos;ATELIER
                     </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-[linear-gradient(to_bottom,#f7efe3_0%,#f7efe3_50%,#ffffff_50%,#ffffff_100%)]">
+          <div className="mx-auto w-full max-w-6xl px-6 py-12">
+            <h2 className="text-center text-2xl font-extrabold text-zinc-900 md:text-3xl">
+              Dans la peau d&apos;artisans, chefs et artistes pendant 1h30 🔨🧑‍🍳🎨
+            </h2>
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {[
+                {
+                  title:
+                    "Art, cuisine ou fabrication : 4 salles immersives sans écrans, où l'on fait comme les grands",
+                  color: "bg-[var(--brand-colors-brand-red-djogo)]",
+                  textClass: "text-[var(--brand-colors-brand-yellow-djogo)]",
+                  image: "/images/photo_art.webp",
+                  alt: "Atelier artisanal",
+                },
+                {
+                  title:
+                    "Défis, histoires, décors : Vivez nos ateliers avec vos enfants ou laissez les faire seuls !",
+                  color: "bg-[var(--brand-colors-brand-yellow-djogo)]",
+                  textClass: "text-[var(--brand-colors-brand-red-djogo)]",
+                  image: "/images/photo_cuisine.webp",
+                  alt: "Atelier en famille",
+                },
+                {
+                  title:
+                    '"C\'est moi qui l\'ai fait" : Repartez avec vos créations et profitez de notre espace café !',
+                  color: "bg-[var(--brand-colors-brand-red-djogo)]",
+                  textClass: "text-[var(--brand-colors-brand-yellow-djogo)]",
+                  image: "/images/photo_peinture.webp",
+                  alt: "Créations artisanales",
+                },
+              ].map((item) => (
+                <article
+                  key={item.title}
+                  className={`${item.color} rounded-3xl p-5 shadow-lg`}
+                >
+                  <p className={`text-lg font-bold ${item.textClass}`}>
+                    {item.title}
+                  </p>
+                  <div className="mt-5 overflow-hidden rounded-2xl bg-white">
+                    <img
+                      className="h-[320px] w-full object-cover"
+                      src={item.image}
+                      alt={item.alt}
+                    />
                   </div>
                 </article>
               ))}
@@ -351,7 +393,7 @@ export default function Home() {
         <section className="bg-[#f7efe3]">
           <div className="mx-auto w-full max-w-6xl px-6 py-12">
             <h2 className="text-center text-2xl font-extrabold text-[var(--brand-colors-brand-red-djogo)] md:text-3xl">
-              On vous attend à Lyon Vaise, proche métro et parking 👋
+              La Fabrique vous attend à Lyon Vaise, proche métro et parking 👋
             </h2>
             <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
@@ -382,11 +424,50 @@ export default function Home() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-bold">Rdv chez Djogo</p>
-                    <p>Rdv chez Djogo 4 Rue du Four À Chaux, 69009 Lyon</p>
-                    <a className="text-sm font-semibold text-zinc-900 underline" href="https://maps.google.com" target="_blank" rel="noreferrer">
-                      Lancer l’itinéraire
-                    </a>
+                    <p className="font-bold">Adresse</p>
+                    <p>4 Rue du Four À Chaux, 69009 Lyon</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-900">
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 20a10 10 0 0 1 20 0" />
+                      <path d="M7 7h10l1.5 4.5V17a2 2 0 0 1-2 2H7.5A2.5 2.5 0 0 1 5 16.5V11.5Z" />
+                      <path d="M7 11h10" />
+                      <circle cx="9" cy="16" r="1" />
+                      <circle cx="15" cy="16" r="1" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-bold">TCL</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      <li>Métro D et pôle bus – arrêt gare de Vaise (à 8 min à pied)</li>
+                      <li>Bus 31, 43 – arrêt La Voûte (à 1 min à pied) ou arrêt Laborde (3 min à pied)</li>
+                      <li>Bus 2, 20, 22, 23, 71 – arrêt La Voûte (à 3 min à pied)</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-900">
+                    <span className="text-sm font-bold">P</span>
+                  </div>
+                  <div>
+                    <p className="font-bold">Parkings</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      <li>Parking Indigo Vaise Industrie à 3 min à pied : 6€ / 3h en partenariat avec Djogo (ticket à valider chez Djogo directement)</li>
+                      <li>Parking P+R Vaise 2 à 5 min à pied : Gratuit si utilisation des Transports en commun dans la journée</li>
+                      <li>Parking payant dans la rue, gratuit le dimanche (selon disponibilité)</li>
+                    </ul>
                   </div>
                 </div>
 
@@ -415,48 +496,6 @@ export default function Home() {
                     </ul>
                   </div>
                 </div>
-
-                <div className="flex gap-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-900">
-                    <svg
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 20a10 10 0 0 1 20 0" />
-                      <path d="M7 7h10l1.5 4.5V17a2 2 0 0 1-2 2H7.5A2.5 2.5 0 0 1 5 16.5V11.5Z" />
-                      <path d="M7 11h10" />
-                      <circle cx="9" cy="16" r="1" />
-                      <circle cx="15" cy="16" r="1" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-bold">Accès TCL</p>
-                    <ul className="mt-2 list-disc space-y-1 pl-5">
-                      <li>Métro D et pôle bus – arrêt gare de Vaise (à 8 min à pied)</li>
-                      <li>Bus 31, 43 – arrêt La Voûte (à 1 min à pied) ou arrêt Laborde (3 min à pied)</li>
-                      <li>Bus 2, 20, 22, 23, 71 – arrêt La Voûte (à 3 min à pied)</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-900">
-                    <span className="text-sm font-bold">P</span>
-                  </div>
-                  <div>
-                    <p className="font-bold">Accès Parking</p>
-                    <ul className="mt-2 list-disc space-y-1 pl-5">
-                      <li>Parking Indigo Vaise Industrie à 3 min à pied : 6€ / 3h en partenariat avec Djogo (ticket à valider chez Djogo directement)</li>
-                      <li>Parking P+R Vaise 2 à 5 min à pied : Gratuit si utilisation des Transports en commun dans la journée</li>
-                      <li>Parking payant dans la rue, gratuit le dimanche (selon disponibilité)</li>
-                    </ul>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -470,42 +509,44 @@ export default function Home() {
             <div className="mt-6 grid gap-3">
               {[
                 {
-                  question: "Comment se déroule un atelier chez Djogo ?",
-                  answer:
-                    "Chaque atelier dure 1h30 et accueille jusqu'à 10 enfants ou 8 binômes adulte/enfant, encadrés par un animateur professionnel. Les enfants sont immergés dans un univers ludique, avec des histoires, des décors et des accessoires adaptés à chaque activité. Ils manipulent de vrais outils et matériaux, et repartent avec leur création à la fin de la séance.",
+                  question: "Peut on venir à deux parents pour un enfant en atelier ?",
+                  answer: "Aujourd'hui nous ne proposons pas cette option. Nos expériences sont conçues pour que les enfants tirent le maximum de confiance en eux, d'apprentissage et de jeu, avec un adulte maximum. Egalement et par contrainte de place dans les salles, accepter un enfant avec 2 parents à chaque fois nous contraindrait à revoir complètement notre politique tarifaire, ce qui n'est pas à l'ordre du jour !",
                 },
                 {
-                  question:
-                    "Que se passe-t-il si mon enfant termine son atelier plus rapidement que les autres ?",
-                  answer:
-                    "Tous les ateliers Djogo sont conçus pour que chaque enfant ait le temps de finir sa création, quel que soit son rythme. Si un enfant termine plus vite, il peut aller plus loin dans la personnalisation ou la décoration de son œuvre, ou même explorer des techniques supplémentaires proposées par l’animateur. Il peut aussi, s’il le souhaite, aider les autres enfants à avancer, favorisant ainsi l’entraide et le partage au sein du groupe.",
+                  question: "Puis-je accompagner plusieurs enfants ?",
+                  answer: "Un adulte peut accompagner jusqu'à 3 enfants chez Djogo ! Les adultes sont obligatoires jusqu'à 6 ou 7 ans en fonction de l'atelier choisi.",
                 },
                 {
                   question: "À partir de quel âge mon enfant peut-il participer seul à un atelier ?",
-                  answer:
-                    "Chez Djogo, les enfants de 6 à 12 ans peuvent participer seuls aux ateliers, sous la supervision de nos animateurs professionnels. Pour les plus petits, de 3 à 12 ans, il est possible de participer à un atelier en duo avec un adulte (parent, grand-parent...). Des sessions spécifiques sont prévues pour chaque formule (une session enfant seul ne se mixe pas avec une session adulte-enfant).",
+                  answer: "Chez Djogo, les enfants de 6 à 12 ans peuvent participer seuls aux ateliers (6 ou 7 ans selon l'atelier) sous la supervision de nos animateurs professionnels. Pour les plus petits, de 3 à 12 ans, il est possible de participer à un atelier en duo avec un adulte (parent, grand-parent…). Des sessions spécifiques sont prévues pour chaque formule (une session enfant seul ne se mixe pas avec une session adulte-enfant)",
                 },
                 {
-                  question:
-                    "Comment la sécurité des enfants est-elle assurée pendant les ateliers ?",
-                  answer:
-                    "La sécurité des enfants est une priorité chez Djogo. Tous les ateliers sont encadrés par des animateurs professionnels, formés à l’accompagnement des enfants et à la gestion des groupes. Les activités sont adaptées à chaque tranche d’âge, avec des outils et matériaux sélectionnés pour leur sécurité, en plus d’équipements de protection individuels.",
+                  question: "Est il possible de venir avec un chien ?",
+                  answer: "‍Chez Djogo, bien que nous adorons nos amis les chiens, seulement les chiens guides sont admis. Nous ouvrirons bientôt la terrasse et vous informerons de l'évolution de notre politique d'accueil le cas échéant !",
+                },
+                {
+                  question: "Comment se déroule un atelier chez Djogo ?",
+                  answer: "Chaque atelier dure 1h30 et accueille jusqu’à 10 enfants ou 8 binômes adulte/enfant, encadrés par un animateur professionnel. Les enfants sont immergés dans un univers ludique, avec des histoires, des décors et des accessoires adaptés à chaque activité. Ils manipulent de vrais outils et matériaux, et repartent avec leur création à la fin de la séance.",
+                },
+                {
+                  question: "Que se passe-t-il si mon enfant termine son atelier plus rapidement que les autres ?",
+                  answer: "‍Tous les ateliers Djogo sont conçus pour que chaque enfant ait le temps de finir sa création, quel que soit son rythme. Si un enfant termine plus vite, il peut aller plus loin dans la personnalisation ou la décoration de son œuvre, ou même explorer des techniques supplémentaires proposées par l’animateur. Il peut aussi, s’il le souhaite, aider les autres enfants à avancer, favorisant ainsi l’entraide et le partage au sein du groupe.",
+                },
+                {
+                  question: "Comment la sécurité des enfants est-elle assurée pendant les ateliers ?",
+                  answer: "La sécurité des enfants est une priorité chez Djogo. Tous les ateliers sont encadrés par des animateurs professionnels, formés à l’accompagnement des enfants et à la gestion des groupes. Les activités sont adaptées à chaque tranche d’âge, avec des outils et matériaux sélectionnés pour leur sécurité, en plus d’équipements de protection individuels.",
                 },
                 {
                   question: "Peut-on offrir des ateliers Djogo en cadeau ?",
-                  answer:
-                    "Oui ! Il est possible d’acheter des bons cadeaux pour offrir une expérience Djogo à un enfant de votre entourage. Les bons cadeaux sont disponibles pour un atelier ponctuel, un abonnement ou même un pack d’ateliers, et peuvent être utilisés sur la période de votre choix.",
+                  answer: "Oui ! Il est possible d’acheter des bons cadeaux pour offrir une expérience Djogo à un enfant de votre entourage. Les bons cadeaux sont disponibles pour un atelier ponctuel, un abonnement ou même un pack d’ateliers, et peuvent être utilisés sur la période de votre choix.",
                 },
                 {
                   question: "Combien de sessions sont proposées chaque jour ?",
-                  answer:
-                    "Djogo propose jusqu'à 5 sessions d'ateliers par salle et par jour, les mercredis, week-ends, jours fériés et pendant les vacances scolaires. Cela permet de choisir facilement le créneau qui convient le mieux à votre emploi du temps familial.",
+                  answer: "Djogo propose jusqu’à 5 sessions d’ateliers par salle et par jour, les mercredis, week-ends, jours fériés et pendant les vacances scolaires. Cela permet de choisir facilement le créneau qui convient le mieux à votre emploi du temps familial.",
                 },
                 {
-                  question:
-                    "Que peuvent faire les adultes accompagnants pendant les ateliers \"enfant seul\" ?",
-                  answer:
-                    "Pendant que les enfants s'amusent, les adultes accompagnants peuvent profiter d’un espace café-bar convivial, avec Wi-Fi gratuit, restauration engagée et salle de télétravail. Un espace d’éveil est aussi prévu pour les plus petits, ainsi que des jeux, livres et dessins pour patienter en toute tranquillité.",
+                  question: "Que peuvent faire les adultes accompagnants pendant les ateliers 'enfant seul' ?",
+                  answer: "Pendant que les enfants s’amusent, les adultes accompagnants peuvent profiter d’un espace café-bar convivial, avec Wi-Fi gratuit, restauration engagée salle de télétravail. Un espace d’éveil est aussi prévu pour les plus petits, ainsi que des jeux, livres et dessins pour patienter en toute tranquillité.",
                 },
               ].map((item) => (
                 <details
